@@ -24,3 +24,12 @@ datSap$year <- year(datSap$dateF)
 datSap$doy <- yday(datSap$dateF)
 datSap$hour <- hour(datSap$dateF)+(minute(datSap$dateF)/60)
 datSap$DD <- datSap$doy + (datSap$hour/24)
+
+
+
+#### initial plots ----
+plotFrame <- datSap[datSap$record > 106 ,]
+
+
+ggplot(plotFrame, aes(dateF, dT16))+
+  geom_path()
