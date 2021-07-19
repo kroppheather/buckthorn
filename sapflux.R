@@ -111,8 +111,8 @@ dtCalc$a <- ifelse(dtCalc$sd.cm >= 3,1,
 dtCalc$b <- 1 - dtCalc$a 
 
 dtCalc$dTCor <- (dtCalc$dT - (dtCalc$b * dtCalc$maxDT))/dtCalc$a
-
-dtCalc$velo <- 0.119*(dtCalc$dTCor^1.231)
+dtCalc$K <- (dtCalc$maxDT - dtCalc$dtCalc$dTCor)/dtCalc$dtCor
+dtCalc$velo <- 0.119*(dtCalc$Kr^1.231)
 
 
 ################
