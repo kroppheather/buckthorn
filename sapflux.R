@@ -111,8 +111,8 @@ dtCalc$a <- ifelse(dtCalc$sd.cm >= 3,1,
 dtCalc$b <- 1 - dtCalc$a 
 
 dtCalc$dTCor <- (dtCalc$dT - (dtCalc$b * dtCalc$maxDT))/dtCalc$a
-dtCalc$K <- (dtCalc$maxDT - dtCalc$dtCalc$dTCor)/dtCalc$dtCor
-dtCalc$velo <- 0.119*(dtCalc$Kr^1.231)
+dtCalc$K <- (dtCalc$maxDT - dtCalc$dTCor)/dtCalc$dTCor
+dtCalc$velo <- 0.119*(dtCalc$K^1.231)
 
 
 ################
@@ -122,7 +122,7 @@ dtCalc$velo <- 0.119*(dtCalc$Kr^1.231)
 #calculate sapflow in volume per time
 #filter out days with voltage regulator down
 #filter outliers that exceed 
-
+dtCalc <- dtCalc[ dtCalc$velo <0.5,]
 
 ggplot(dtCalc[dtCalc$sensor ==1,], aes(x=DD,y=velo))+ 
   geom_point()
