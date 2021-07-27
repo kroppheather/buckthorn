@@ -15,6 +15,8 @@ sversion <- "07_16_2021"
 #### read in data ----
 sapRaw <- read.csv(paste0(dirData,"/campbell/",sversion,"/Sapflow_TableDT.dat"),
                     header=FALSE,skip=4,na.strings=c("NAN"))
+
+greenwood <- read.csv("K:/Environmental_Studies/hkropp/Data/campus/buckthorn/green ash olson paper measurements.csv")
 #remove unused sensor locations
 datSap <- sapRaw[,1:18]
 #rename columns
@@ -37,7 +39,8 @@ sensors <- read.csv("K://Environmental_Studies/hkropp/Data/campus/buckthorn/sapf
 sensors$sd.cm <- ifelse(sensors$Type == "Ash", #if sensors is ash
                         -36.33 + (44.28*(1-exp(-0.1306*sensors$DBH.cm))),#allometry
                         1)#if buckthorn fill place with 1 cm placeholder until allometry is fully measured
-
+#allometry from greenwood
+greenwood
 #organize data for easier calculations
 tabledt <- datSap
 
@@ -113,6 +116,24 @@ dtCalc$b <- 1 - dtCalc$a
 dtCalc$dTCor <- (dtCalc$dT - (dtCalc$b * dtCalc$maxDT))/dtCalc$a
 dtCalc$K <- (dtCalc$maxDT - dtCalc$dTCor)/dtCalc$dTCor
 dtCalc$velo <- 0.119*(dtCalc$K^1.231)
+
+
+
+###############
+#Ash allometry from literature
+greenwood$sap.area <- greenwood$Sapwood.Volume.ft3/greenwood$Height.feet
+#30.48 cm in 1 foot
+greenwood$sap.area.cm <- 30.48*30.48*greenwood$sap.area 
+greenwood$dbh.cm <- (greenwood$DBH.in*2.54)
+greenwood$treeArea <- ((greenwood$dbh.cm /2)^2)*pi
+
+plot(greenwood$dbh.cm,greenwood$sap.area.cm)
+
+saparea.reg <- lm(greenwood$sap.area.cm ~ greenwood$dbh.cm)
+summary(saparea.reg)
+#meadows paper
+#LA (m2) = -66.185 +  6.579*DBH in cm
+
 
 
 ################
