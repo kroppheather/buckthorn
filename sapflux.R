@@ -9,12 +9,22 @@ library(dplyr)
 dirData <- "K:/Environmental_Studies/hkropp/Data/campus/buckthorn/sapflux"
 
 #sapflow download date for file
-sversion <- "07_16_2021"
+sversion <- "07_23_2021"
 
 
 #### read in data ----
 sapRaw <- read.csv(paste0(dirData,"/campbell/",sversion,"/Sapflow_TableDT.dat"),
                     header=FALSE,skip=4,na.strings=c("NAN"))
+sapInfo <- read.csv(paste0(dirData,"/campbell/",sversion,"/Sapflow_TableTC.dat"),
+                   header=FALSE,skip=4,na.strings=c("NAN"))
+heaterv <- data.frame(date =  ymd_hms(sapInfo[,1]),
+                      ht1 = sapInfo[,165],
+                      ht2 = sapInfo[,166])
+heaterv$year <- year(heaterv$date)
+heaterv$doy <- yday(heaterv$date)
+heaterv$hour <- hour(heaterv$date)+(minute(heaterv$date)/60)
+
+
 
 greenwood <- read.csv("K:/Environmental_Studies/hkropp/Data/campus/buckthorn/green ash olson paper measurements.csv")
 #remove unused sensor locations
@@ -67,7 +77,53 @@ dtAll <- data.frame(date= rep(tabledt$date, times = 16),
                            tabledt[,17],
                            tabledt[,18]))
 
+#filter out unreliable data due to voltage regulator issues
 
+#moved heaters to more reliable first regulator on july 2 10-10:30 and replaced reculator on July 6 10 am
+ggplot(heaterv, aes(x=date,y=ht1))+ 
+  geom_point()+
+  geom_line()
+
+ggplot(heaterv, aes(x=date,y=ht2))+ 
+  geom_point()+
+  geom_line()
+
+#indicate which heater
+dtAll$htrN <- ifelse(dtAll$sensor <= 8,1,
+                     ifelse(dtAll$doy < 183 | dtAll$doy > 187, 2,1))
+heaterv[which(heaterv$ht1 == 0),]
+
+#calculate daily heater sd
+heater1sd <- aggregate(heaterv$ht1, by=list(doy=heaterv$doy),FUN="sd")
+heater2sd <- aggregate(heaterv$ht2, by=list(doy=heaterv$doy),FUN="sd")
+heater1min <- aggregate(heaterv$ht1, by=list(doy=heaterv$doy),FUN="min")
+heater2min <- aggregate(heaterv$ht2, by=list(doy=heaterv$doy),FUN="min")
+
+heatersAll <- data.frame(doy= c(heater1sd$doy,heater2sd$doy),
+                         htrN=c(rep(1,nrow(heater1sd)),rep(2,nrow(heater2sd))),
+                         sd = c(heater1sd$x,heater2sd$x),
+                         min=c(heater1min$x,heater2min$x))
+
+ggplot(heatersAll, aes(doy, sd, col=htrN))+
+  geom_point()
+
+
+#join heater info back into dt
+#56448
+dtAll <- left_join(dtAll,heatersAll, by=c("doy","htrN"))
+
+
+#################
+#filter out days when voltage regulator was unreliable
+#either too variable or heaters turned off at any point
+dtAll <- dtAll[dtAll$sd <= 0.05 & dtAll$min >0,]
+
+
+#################
+#check for dt outliers
+quantile(dtAll$dT, prob=seq(0,1,by=0.001))
+#definitely few outliers. 99.5% and above are unusually high
+dtAll <- dtAll[dtAll$dT <= quantile(dtAll$dT, prob=0.995),]
 
 #join sensor info into table dt
 #make a doy that contains the same night
@@ -77,11 +133,14 @@ dtAll$doy5 <- ifelse(dtAll$hour < 5, dtAll$doy-1,dtAll$doy)
 night <- dtAll[dtAll$hour < 5|dtAll$hour >= 22,]
 
 #filter night so maximum in day and sensor is provided
-maxnight <- night %>% 
+maxnight1 <- night %>% 
   group_by(sensor, doy5) %>%
   filter(dT == max(dT),na.rm=TRUE)
 #remove duplicate maximums that occur for longer than 15 min
-maxnight <- maxnight[!duplicated(maxnight$dT),]
+#just take earliest measurement
+maxnight <- maxnight1  %>% 
+  group_by(sensor, doy5) %>%
+  filter(hour == min(hour),na.rm=TRUE)
 
 ggplot(maxnight, aes(doy5,dT, color=sensor))+
   geom_point()
@@ -117,6 +176,48 @@ dtCalc$dTCor <- (dtCalc$dT - (dtCalc$b * dtCalc$maxDT))/dtCalc$a
 dtCalc$K <- (dtCalc$maxDT - dtCalc$dTCor)/dtCalc$dTCor
 dtCalc$velo <- 0.119*(dtCalc$K^1.231)
 
+#seperate types
+ash <- dtCalc[dtCalc$Type == "Ash",]
+buckthorn <- dtCalc[dtCalc$Type == "Buckthorn",]
+
+
+#############
+#compare N & S sensors
+sens3 <- data.frame(date = ash$date[ash$sensor == 3],
+                    veloN = ash$velo[ash$sensor == 3])
+                     
+sens4 <- data.frame(date = ash$date[ash$sensor == 4],
+                    veloS = ash$velo[ash$sensor == 4])
+
+treeD1 <- inner_join(sens3,sens4, by="date")
+
+#compare N & S sensors
+sens12 <- data.frame(date = ash$date[ash$sensor == 12],
+                    veloN = ash$velo[ash$sensor == 12])
+
+sens11 <- data.frame(date = ash$date[ash$sensor == 11],
+                    veloS = ash$velo[ash$sensor == 11])
+
+treeD2 <- inner_join(sens12,sens11, by="date")
+
+sens15 <- data.frame(date = ash$date[ash$sensor == 15],
+                     veloN = ash$velo[ash$sensor == 15])
+
+sens16 <- data.frame(date = ash$date[ash$sensor == 16],
+                     veloS = ash$velo[ash$sensor == 16])
+
+treeD3 <- inner_join(sens15,sens16, by="date")
+
+treeDir <- rbind(treeD1,treeD2,treeD3)
+#check relationship
+azim.rel <- lm(treeDir$veloS ~ treeDir$veloN)
+summary(azim.rel)
+
+ggplot(treeDir, aes(veloN,veloS))+
+  geom_point()+
+  geom_abline()
+
+
 
 
 ###############
@@ -131,8 +232,11 @@ plot(greenwood$dbh.cm,greenwood$sap.area.cm)
 
 saparea.reg <- lm(greenwood$sap.area.cm ~ greenwood$dbh.cm)
 summary(saparea.reg)
+#sap cm2 = -9.6 + 8.854*DBH cm
 #meadows paper
 #LA (m2) = -66.185 +  6.579*DBH in cm
+
+
 
 
 
@@ -142,8 +246,7 @@ summary(saparea.reg)
 #need sapwood area allometry from paper
 #calculate sapflow in volume per time
 #filter out days with voltage regulator down
-#filter outliers that exceed 
-dtCalc <- dtCalc[ dtCalc$velo <0.5,]
+
 
 ggplot(dtCalc[dtCalc$sensor ==1,], aes(x=DD,y=velo))+ 
   geom_point()
@@ -193,3 +296,56 @@ ggplot(dtCalc[dtCalc$sensor ==15,], aes(x=DD,y=velo))+
 ggplot(dtCalc[dtCalc$sensor ==16,], aes(x=DD,y=velo))+ 
   geom_point()+
   geom_line()
+
+
+
+
+ggplot(dtCalc[dtCalc$sensor ==1,], aes(x=DD,y=dT))+ 
+  geom_point()
+
+ggplot(dtCalc[dtCalc$sensor ==2,], aes(x=DD,y=dT))+ 
+  geom_point()
+
+ggplot(dtCalc[dtCalc$sensor ==3,], aes(x=DD,y=dT))+ 
+  geom_point()+
+  geom_line()
+ggplot(dtCalc[dtCalc$sensor ==4,], aes(x=DD,y=dT))+ 
+  geom_point()+
+  geom_line()
+ggplot(dtCalc[dtCalc$sensor ==5,], aes(x=DD,y=dT))+ 
+  geom_point()+
+  geom_line()
+ggplot(dtCalc[dtCalc$sensor ==6,], aes(x=DD,y=dT))+ 
+  geom_point()+
+  geom_line()
+ggplot(dtCalc[dtCalc$sensor ==7,], aes(x=DD,y=dT))+ 
+  geom_point()+
+  geom_line()
+ggplot(dtCalc[dtCalc$sensor ==8,], aes(x=DD,y=dT))+ 
+  geom_point()+
+  geom_line()
+ggplot(dtCalc[dtCalc$sensor ==9,], aes(x=DD,y=dT))+ 
+  geom_point()+
+  geom_line()
+ggplot(dtCalc[dtCalc$sensor ==10,], aes(x=DD,y=dT))+ 
+  geom_point()+
+  geom_line()
+ggplot(dtCalc[dtCalc$sensor ==11,], aes(x=DD,y=dT))+ 
+  geom_point()+
+  geom_line()
+ggplot(dtCalc[dtCalc$sensor ==12,], aes(x=DD,y=dT))+ 
+  geom_point()+
+  geom_line()
+ggplot(dtCalc[dtCalc$sensor ==13,], aes(x=DD,y=dT))+ 
+  geom_point()+
+  geom_line()
+ggplot(dtCalc[dtCalc$sensor ==14,], aes(x=DD,y=dT))+ 
+  geom_point()+
+  geom_line()
+ggplot(dtCalc[dtCalc$sensor ==15,], aes(x=DD,y=dT))+ 
+  geom_point()+
+  geom_line()
+ggplot(dtCalc[dtCalc$sensor ==16,], aes(x=DD,y=dT))+ 
+  geom_point()+
+  geom_line()
+
