@@ -251,14 +251,23 @@ ash.tree$LA.m2 <- -66.185 +  6.579*ash.tree$DBH.cm
 ash.tree$Flow.L.s <- ash.tree$velo * (ash.tree$sap.areacm2*(1/100)*(1/100))
 ash.tree$tc.L.m2.s <- ash.tree$Flow.L.s/ ash.tree$LA.m2 
 #summarize total per day for each tree
+#remove NA
+ash.treeNN <- ash.tree[is.na(ash.tree$tc.L.m2.s)==FALSE,]
+#calculate total water use in a day
+#total liters used in 15 min period
+ash.treeNN$L.m2.p <- ash.treeNN$tc.L.m2.s* 60 *15
 
+#sum up 15 min periods
+T.day <- T.exp %>%
+  group_by(doy, Removal) %>%
+  summarise(sum = sum(tc.L.m2.s),sd=sd(tc.L.m2.s), n=length(tc.L.m2.s))
 
 
 
 
 colnames(T.exp)[5] <- "tc.L.m2.s"
 
-ash.treeNN <- ash.tree[is.na(ash.tree$tc.L.m2.s)==FALSE,]
+
 #summary table
 T.exp <- ash.treeNN %>%
   group_by(doy, hour, DD, Removal) %>%
@@ -270,7 +279,13 @@ ggplot(T.exp, aes(DD,mean, col=Removal))+
   geom_line()+
   geom_point()
 
-
+#calculate total water use in a day
+#total liters used in 15 min period
+T.exp$L.m2.p <- T.exp$mean* 60 *15
+#sum up 15 min periods
+T.day <- T.exp %>%
+  group_by(doy, Removal) %>%
+  summarise(sum = sum(tc.L.m2.s),sd=sd(tc.L.m2.s), n=length(tc.L.m2.s))
 
 
 ################
