@@ -182,7 +182,7 @@ buckthorn <- dtCalc[dtCalc$Type == "Buckthorn",]
 
 
 #############
-#compare N & S sensors
+#compare N & S sensors for ash
 sens3 <- data.frame(date = ash$date[ash$sensor == 3],
                     veloN = ash$velo[ash$sensor == 3])
                      
@@ -191,7 +191,7 @@ sens4 <- data.frame(date = ash$date[ash$sensor == 4],
 
 treeD1 <- inner_join(sens3,sens4, by="date")
 
-#compare N & S sensors
+#compare N & S sensors for ash
 sens12 <- data.frame(date = ash$date[ash$sensor == 12],
                     veloN = ash$velo[ash$sensor == 12])
 
@@ -217,6 +217,9 @@ ggplot(treeDir, aes(veloN,veloS))+
   geom_point()+
   geom_abline()
 
+#regression does not differ significantly from S=0 + 1*N
+
+ash.tree <- ash[ash$Direction == "N", ]
 
 
 
@@ -236,6 +239,36 @@ summary(saparea.reg)
 #meadows paper
 #LA (m2) = -66.185 +  6.579*DBH in cm
 
+#### tree calculations ----
+
+ash.tree$sap.areacm2 <- -9.6 + 8.854*ash.tree$DBH.cm
+ash.tree$LA.m2 <- -66.185 +  6.579*ash.tree$DBH.cm
+
+
+#flow rate according to clearwater
+#F(L s-1) =  v(mm s-1)* A (m2)
+
+ash.tree$Flow.L.s <- ash.tree$velo * (ash.tree$sap.areacm2*(1/100)*(1/100))
+ash.tree$tc.L.m2.s <- ash.tree$Flow.L.s/ ash.tree$LA.m2 
+#summarize total per day for each tree
+
+
+
+
+
+colnames(T.exp)[5] <- "tc.L.m2.s"
+
+ash.treeNN <- ash.tree[is.na(ash.tree$tc.L.m2.s)==FALSE,]
+#summary table
+T.exp <- ash.treeNN %>%
+  group_by(doy, hour, DD, Removal) %>%
+  summarise(mean = mean(tc.L.m2.s),sd=sd(tc.L.m2.s), n=length(tc.L.m2.s))
+#only use time points with at least 3 trees
+T.exp <- T.exp[T.exp$n >=3,]
+
+ggplot(T.exp, aes(DD,mean, col=Removal))+
+  geom_line()+
+  geom_point()
 
 
 
