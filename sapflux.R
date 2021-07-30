@@ -311,14 +311,14 @@ ggplot(Flow.exp, aes(DD,mean, col=Removal))+
   geom_point()
 
 ggplot(Flow.m2.exp[Flow.m2.exp$doy >= 187,], aes(DD,mean, col=Removal))+
-  geom_line(alpha=0.5)+
-  geom_point(alpha=0.5)+
-  geom_errorbar(aes(ymin=mean-((sd/sqrt(n))*2), ymax=mean+((sd/sqrt(n))*2)), width=.2) +
-  theme_classic()
+  geom_line(alpha=0.25)+
+  geom_point(alpha=0.25)+
+  theme_classic()+
+  geom_errorbar(aes(ymin=mean-((sd/sqrt(n))*2), ymax=mean+((sd/sqrt(n))*2)), alpha=0.5) 
+  
 
 
 ggplot(L.day.m2.exp, aes(doy,mean, col=Removal))+
-  geom_line()+
   geom_point()+
   geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=.2) 
 
