@@ -156,8 +156,8 @@ dtCalc <- left_join(dtCalct1 , sensors, by=c("sensor"="SensorID"))
 
 #from clearwater
 
-#sap velocity mm s-1 (v)
-#v = 0.119*k^1.231
+#sap velocity m s-1 (v)
+#v = 0.000119*k^1.231
 #flow is F (L s-1) = v* A (m2, sapwood area)
 
 #K= (dTmax - dT)/dT if sensor is fully within sapwood
@@ -174,7 +174,8 @@ dtCalc$b <- 1 - dtCalc$a
 
 dtCalc$dTCor <- (dtCalc$dT - (dtCalc$b * dtCalc$maxDT))/dtCalc$a
 dtCalc$K <- (dtCalc$maxDT - dtCalc$dTCor)/dtCalc$dTCor
-dtCalc$velo <- 0.119*(dtCalc$K^1.231)
+dtCalc$velo <- 0.000119*(dtCalc$K^1.231)
+
 
 #seperate types
 ash <- dtCalc[dtCalc$Type == "Ash",]
@@ -242,51 +243,89 @@ summary(saparea.reg)
 #### tree calculations ----
 
 ash.tree$sap.areacm2 <- -9.6 + 8.854*ash.tree$DBH.cm
-ash.tree$LA.m2 <- -66.185 +  6.579*ash.tree$DBH.cm
+#convert sap area to m2
+ash.tree$sap.aream2 <- 0.0001*ash.tree$sap.areacm2
 
+ash.tree$LA.m2 <- -66.185 +  6.579*ash.tree$DBH.cm
+range(ash.tree$LA.m2)
 
 #flow rate according to clearwater
-#F(L s-1) =  v(mm s-1)* A (m2)
+#F(L s-1) =  v(m s-1)* A (m2)
 
-ash.tree$Flow.L.s <- ash.tree$velo * (ash.tree$sap.areacm2*(1/100)*(1/100))
-ash.tree$tc.L.m2.s <- ash.tree$Flow.L.s/ ash.tree$LA.m2 
+ash.tree$Flow.m3.s <- ash.tree$velo * ash.tree$sap.aream2
+
+ash.tree$Flow.L.s <- ash.tree$Flow.m3.s * 1000
+
+ash.tree$Flow.L.m2.s <- ash.tree$Flow.L.s /ash.tree$LA.m2 
+
 #summarize total per day for each tree
 #remove NA
-ash.treeNN <- ash.tree[is.na(ash.tree$tc.L.m2.s)==FALSE,]
-#calculate total water use in a day
+ash.treeNN <- ash.tree[is.na(ash.tree$Flow.L.s)==FALSE,]
+#calculate total water use by each tree in a day
 #total liters used in 15 min period
-ash.treeNN$L.m2.p <- ash.treeNN$tc.L.m2.s* 60 *15
+ash.treeNN$L.p <- ash.treeNN$Flow.L.s* 60 *15
+#normalized by leaf area
 
-#sum up 15 min periods
-T.day <- T.exp %>%
-  group_by(doy, Removal) %>%
-  summarise(sum = sum(tc.L.m2.s),sd=sd(tc.L.m2.s), n=length(tc.L.m2.s))
+#sum up for each tree and day
+ash.L.day <- ash.treeNN %>%
+  group_by(doy, Removal, sensor) %>%
+  summarise(sum = sum(L.p), n=length(L.p))
 
+ash.treeNN$L.p.m2  <- ash.treeNN$L.p/ash.treeNN$LA.m2 
 
-
-
-colnames(T.exp)[5] <- "tc.L.m2.s"
-
+ash.L.m.day <- ash.treeNN %>%
+  group_by(doy, Removal, sensor) %>%
+  summarise(sum = sum(L.p.m2 ), n=length(L.p.m2))
 
 #summary table
-T.exp <- ash.treeNN %>%
+#flow L s every 15 min by treatment
+Flow.exp <- ash.treeNN %>%
   group_by(doy, hour, DD, Removal) %>%
-  summarise(mean = mean(tc.L.m2.s),sd=sd(tc.L.m2.s), n=length(tc.L.m2.s))
+  summarise(mean = mean(Flow.L.s),sd=sd(Flow.L.s), n=length(Flow.L.s))
+#flow L m-2 leaf s-1 by 15min
+Flow.m2.exp <- ash.treeNN %>%
+  group_by(doy, hour, DD, Removal) %>%
+  summarise(mean = mean(Flow.L.m2.s),sd=sd(Flow.L.m2.s), n=length(Flow.L.m2.s))
 #only use time points with at least 3 trees
-T.exp <- T.exp[T.exp$n >=3,]
+Flow.exp <- Flow.exp[T.exp$n >=3,]
 
-ggplot(T.exp, aes(DD,mean, col=Removal))+
+#total liters per day used by the tree
+ash.L.day <- ash.L.day[ ash.L.day$n == 96,]
+
+L.day.exp <- ash.L.day %>%
+  group_by(doy, Removal) %>%
+  summarise(mean = mean(sum),sd=sd(sum), n=length(sum))
+L.day.exp <- L.day.exp[L.day.exp$n >= 3,]
+#total liters per day per m2 leaf area
+ash.L.m.day <- ash.L.m.day[ ash.L.m.day$n == 96,]
+
+L.day.m2.exp <- ash.L.m.day %>%
+  group_by(doy, Removal) %>%
+  summarise(mean = mean(sum),sd=sd(sum), n=length(sum))
+L.day.m2.exp <- L.day.m2.exp[L.day.m2.exp$n >= 3,]
+
+
+
+ggplot(Flow.exp, aes(DD,mean, col=Removal))+
   geom_line()+
   geom_point()
 
-#calculate total water use in a day
-#total liters used in 15 min period
-T.exp$L.m2.p <- T.exp$mean* 60 *15
-#sum up 15 min periods
-T.day <- T.exp %>%
-  group_by(doy, Removal) %>%
-  summarise(sum = sum(tc.L.m2.s),sd=sd(tc.L.m2.s), n=length(tc.L.m2.s))
+ggplot(Flow.m2.exp[Flow.m2.exp$doy >= 187,], aes(DD,mean, col=Removal))+
+  geom_line(alpha=0.5)+
+  geom_point(alpha=0.5)+
+  geom_errorbar(aes(ymin=mean-((sd/sqrt(n))*2), ymax=mean+((sd/sqrt(n))*2)), width=.2) +
+  theme_classic()
 
+
+ggplot(L.day.m2.exp, aes(doy,mean, col=Removal))+
+  geom_line()+
+  geom_point()+
+  geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=.2) 
+
+ggplot(L.day.exp, aes(doy,mean, col=Removal))+
+  geom_line()+
+  geom_point()+
+  geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=.2) 
 
 ################
 #To do
