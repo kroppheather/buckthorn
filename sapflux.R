@@ -9,7 +9,7 @@ library(dplyr)
 dirData <- "K:/Environmental_Studies/hkropp/Data/campus/buckthorn/sapflux"
 
 #sapflow download date for file
-sversion <- "07_30_2021"
+sversion <- "07_27_2021"
 
 
 #### read in data ----
@@ -24,7 +24,7 @@ heaterv$year <- year(heaterv$date)
 heaterv$doy <- yday(heaterv$date)
 heaterv$hour <- hour(heaterv$date)+(minute(heaterv$date)/60)
 
-
+weather <- read.csv("E:/Google Drive/research/projects/Data/campus_weather/OUT/meter/meter_weather_data.csv")
 
 greenwood <- read.csv("K:/Environmental_Studies/hkropp/Data/campus/buckthorn/green ash olson paper measurements.csv")
 #remove unused sensor locations
@@ -321,6 +321,8 @@ ggplot(Flow.m2.exp[Flow.m2.exp$doy >= 187,], aes(DD,mean, col=Removal))+
 ggplot(L.day.m2.exp, aes(doy,mean, col=Removal))+
   geom_point()+
   geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=.2) 
+
+
 
 ggplot(L.day.exp, aes(doy,mean, col=Removal))+
   geom_line()+
