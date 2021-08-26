@@ -9,7 +9,7 @@ library(dplyr)
 dirData <- "K:/Environmental_Studies/hkropp/Data/campus/buckthorn/sapflux"
 
 #sapflow download date for file
-sversion <- "07_27_2021"
+sversion <- "08_26_2021"
 
 
 #### read in data ----
