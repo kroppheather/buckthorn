@@ -2,8 +2,10 @@ library(raster)
 library(sf)
 library(dplyr)
 library(ggplot2)
+library(mapview)
 
 Ddir <- "K:/Environmental_Studies/hkropp/GIS/drone/campus/mapping/P4M"
+DdirGC <- "E:/Google Drive/GIS/drone/campus/mapping/P4M_GCP"
 
 #read in study boundaries
 removal <- st_transform(st_read("K:/Environmental_Studies/hkropp/GIS/GPS/correct_boundaries/poly_removal.shp"),32618)
@@ -21,7 +23,19 @@ fl0503 <- stack(paste0(Ddir, "/05_03_21_buckthorn/05_03_21_buckthorn_transparent
                 paste0(Ddir, "/05_03_21_buckthorn/05_03_21_buckthorn_transparent_reflectance_nir.tif"))
 
 fl0503c <- crop(fl0503, extentB)
-#plotRGB(fl0503c, r=3,g=2,b=1, scale=0.5,stretch="lin")
+plotRGB(fl0503c, r=3,g=2,b=1, scale=0.5,stretch="lin")
+
+#compare to gcp
+fl0503G <- stack(paste0(DdirGC, "/05_03_21_buckthorn/05_03_21_buckthorn_transparent_reflectance_blue.tif"),
+                paste0(DdirGC, "/05_03_21_buckthorn/05_03_21_buckthorn_transparent_reflectance_green.tif"),
+                paste0(DdirGC, "/05_03_21_buckthorn/05_03_21_buckthorn_transparent_reflectance_red.tif"),
+                paste0(DdirGC, "/05_03_21_buckthorn/05_03_21_buckthorn_transparent_reflectance_red edge.tif"),
+                paste0(DdirGC, "/05_03_21_buckthorn/05_03_21_buckthorn_transparent_reflectance_nir.tif"))
+
+fl0503Gc <- crop(fl0503G, extentB)
+plotRGB(fl0503Gc, r=3,g=2,b=1, scale=0.5,stretch="lin")
+viewRGB(fl0503Gc, r=3,g=2,b=1)+
+  viewRGB(fl0503c, r=3,g=2,b=1)
 
 
 fl0519 <- stack(paste0(Ddir, "/05_19_21_buckthorn/05_19_21_transparent_reflectance_blue.tif"),
