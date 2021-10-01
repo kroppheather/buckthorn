@@ -24,7 +24,17 @@ fl0503 <- stack(paste0(Ddir, "/05_03_21_buckthorn/05_03_21_buckthorn_transparent
 
 fl0503c <- crop(fl0503, extentB)
 plotRGB(fl0503c, r=3,g=2,b=1, scale=0.5,stretch="lin")
+viewRGB(fl0503c, r=3,g=2,b=1)
 
+fl0503G <- stack(paste0(DdirGC, "/05_03_21_buckthorn/05_03_21_buckthorn_transparent_reflectance_blue.tif"),
+                paste0(DdirGC, "/05_03_21_buckthorn/05_03_21_buckthorn_transparent_reflectance_green.tif"),
+                paste0(DdirGC, "/05_03_21_buckthorn/05_03_21_buckthorn_transparent_reflectance_red.tif"),
+                paste0(DdirGC, "/05_03_21_buckthorn/05_03_21_buckthorn_transparent_reflectance_red edge.tif"),
+                paste0(DdirGC, "/05_03_21_buckthorn/05_03_21_buckthorn_transparent_reflectance_nir.tif"))
+
+fl0503Gc <- crop(fl0503G, extentB)
+plotRGB(fl0503Gc, r=5,g=3,b=2, scale=0.2)
+viewRGB(fl0503c, r=5,g=3,b=2,quantiles = c(0.05, 0.95),)
 #compare to gcp
 fl0503G <- stack(paste0(DdirGC, "/05_03_21_buckthorn/05_03_21_buckthorn_transparent_reflectance_blue.tif"),
                 paste0(DdirGC, "/05_03_21_buckthorn/05_03_21_buckthorn_transparent_reflectance_green.tif"),
