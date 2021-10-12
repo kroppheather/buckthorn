@@ -6,10 +6,10 @@ library(dplyr)
 
 #### data directory ----
 #sapflow and sensor data parent directory
-dirData <- "K:/Environmental_Studies/hkropp/Data/campus/buckthorn/sapflux"
+dirData <- "E:/Google Drive/research/projects/campus/buckthorn/sapflux"
 
 #sapflow download date for file
-sversion <- "08_26_2021"
+sversion <- "09_24_2021"
 
 
 #### read in data ----
@@ -24,9 +24,9 @@ heaterv$year <- year(heaterv$date)
 heaterv$doy <- yday(heaterv$date)
 heaterv$hour <- hour(heaterv$date)+(minute(heaterv$date)/60)
 
-weather <- read.csv("E:/Google Drive/research/projects/Data/campus_weather/OUT/meter/meter_weather_data.csv")
+weather <- read.csv("E:/Google Drive/research/projects/Data/campus_weather/METER/12_z6-10463 12Oct21.csv")
 
-greenwood <- read.csv("K:/Environmental_Studies/hkropp/Data/campus/buckthorn/green ash olson paper measurements.csv")
+greenwood <- read.csv("E:/Google Drive/research/projects/campus/buckthorn/sapflux/green ash olson paper measurements.csv")
 #remove unused sensor locations
 datSap <- sapRaw[,1:18]
 #rename columns
@@ -42,7 +42,7 @@ datSap$DD <- datSap$doy + (datSap$hour/24)
 
 #### initial plots ----
 
-sensors <- read.csv("K://Environmental_Studies/hkropp/Data/campus/buckthorn/sapflux/sensors_meta.csv")
+sensors <- read.csv("E:/Google Drive/research/projects/campus/buckthorn/sapflux/sensors_meta.csv")
 
 #add sapwood to sensors
 #ash allometry from Zeima Kassahun, Heidi J. Renninger 2021 Ag & Forest Met
