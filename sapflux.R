@@ -287,7 +287,7 @@ Flow.m2.exp <- ash.treeNN %>%
   group_by(doy, hour, DD, Removal) %>%
   summarise(mean = mean(Flow.L.m2.s),sd=sd(Flow.L.m2.s), n=length(Flow.L.m2.s))
 #only use time points with at least 3 trees
-Flow.exp <- Flow.exp[T.exp$n >=3,]
+Flow.exp <- Flow.exp[ Flow.exp$n >=3,]
 
 #total liters per day used by the tree
 ash.L.day <- ash.L.day[ ash.L.day$n == 96,]
