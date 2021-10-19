@@ -17,6 +17,19 @@ sapRaw <- read.csv(paste0(dirData,"/campbell/",sversion,"/Sapflow_TableDT.dat"),
                     header=FALSE,skip=4,na.strings=c("NAN"))
 sapInfo <- read.csv(paste0(dirData,"/campbell/",sversion,"/Sapflow_TableTC.dat"),
                    header=FALSE,skip=4,na.strings=c("NAN"))
+
+weather <- read.csv("E:/Google Drive/research/projects/Data/campus_weather/METER/12_z6-10463 12Oct21.csv")
+
+greenwood <- read.csv("E:/Google Drive/research/projects/campus/buckthorn/sapflux/green ash olson paper measurements.csv")
+
+buckthornSW <- read.csv("E:/Google Drive/research/projects/campus/buckthorn/sapflux/buckthorn_allometry_info.csv")
+
+buckthornSLA <- read.csv("E:/Google Drive/research/projects/campus/buckthorn/buckthorn leaf area/leaf area.csv")
+
+buckthornRemove <- read.csv("E:/Google Drive/research/projects/campus/buckthorn/removal_allom/buckthorn_dbh.csv")
+
+
+#### organize sap flow ---
 heaterv <- data.frame(date =  ymd_hms(sapInfo[,1]),
                       ht1 = sapInfo[,165],
                       ht2 = sapInfo[,166])
@@ -24,9 +37,6 @@ heaterv$year <- year(heaterv$date)
 heaterv$doy <- yday(heaterv$date)
 heaterv$hour <- hour(heaterv$date)+(minute(heaterv$date)/60)
 
-weather <- read.csv("E:/Google Drive/research/projects/Data/campus_weather/METER/12_z6-10463 12Oct21.csv")
-
-greenwood <- read.csv("E:/Google Drive/research/projects/campus/buckthorn/sapflux/green ash olson paper measurements.csv")
 #remove unused sensor locations
 datSap <- sapRaw[,1:18]
 #rename columns
