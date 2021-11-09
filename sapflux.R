@@ -5,28 +5,33 @@ library(ggplot2)
 library(dplyr)
 
 #### data directory ----
+userNumber <- 2
 #sapflow and sensor data parent directory
-dirData <- "E:/Google Drive/research/projects/campus/buckthorn/sapflux"
-
+dirData <- c("E:/Google Drive/research/projects/campus/buckthorn/sapflux",#windows office
+             "/Users/hkropp/Google Drive/research/projects/campus/buckthorn/sapflux") # teaching mac
+dirWeather <- c("E:/Google Drive/research/projects/Data/campus_weather/METER/",
+                "/Users/hkropp/Google Drive/research/projects/Data/campus_weather/METER/")
 #sapflow download date for file
 sversion <- "09_24_2021"
 
 
 #### read in data ----
-sapRaw <- read.csv(paste0(dirData,"/campbell/",sversion,"/Sapflow_TableDT.dat"),
+sapRaw <- read.csv(paste0(dirData[userNumber],"/campbell/",sversion,"/Sapflow_TableDT.dat"),
                     header=FALSE,skip=4,na.strings=c("NAN"))
-sapInfo <- read.csv(paste0(dirData,"/campbell/",sversion,"/Sapflow_TableTC.dat"),
+sapInfo <- read.csv(paste0(dirData[userNumber],"/campbell/",sversion,"/Sapflow_TableTC.dat"),
                    header=FALSE,skip=4,na.strings=c("NAN"))
 
-weather <- read.csv("E:/Google Drive/research/projects/Data/campus_weather/METER/12_z6-10463 12Oct21.csv")
+weather <- read.csv(paste0(dirWeather[userNumber],"/12_z6-10463 12Oct21.csv"),
+                    skip=3, header=FALSE)
+weatherNames <- read.csv(paste0(dirWeather[userNumber],"/12_z6-10463 12Oct21.csv"),
+                         nrows=3, header=FALSE)
+greenwood <- read.csv(paste0(dirData[userNumber],"/green ash olson paper measurements.csv"))
 
-greenwood <- read.csv("E:/Google Drive/research/projects/campus/buckthorn/sapflux/green ash olson paper measurements.csv")
+buckthornSW <- read.csv(paste0(dirData[userNumber],"/buckthorn_allometry_info.csv"))
 
-buckthornSW <- read.csv("E:/Google Drive/research/projects/campus/buckthorn/sapflux/buckthorn_allometry_info.csv")
+buckthornSLA <- read.csv(paste0(dirData[userNumber],"/leaf area.csv"))
 
-buckthornSLA <- read.csv("E:/Google Drive/research/projects/campus/buckthorn/buckthorn leaf area/leaf area.csv")
-
-buckthornRemove <- read.csv("E:/Google Drive/research/projects/campus/buckthorn/removal_allom/buckthorn_dbh.csv")
+buckthornRemove <- read.csv(paste0(dirData[userNumber],"/buckthorn_dbh.csv"))
 
 
 #### organize sap flow ---
