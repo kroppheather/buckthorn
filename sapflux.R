@@ -5,7 +5,7 @@ library(ggplot2)
 library(dplyr)
 
 #### data directory ----
-userNumber <- 2
+userNumber <- 1
 #sapflow and sensor data parent directory
 dirData <- c("E:/Google Drive/research/projects/campus/buckthorn/sapflux",#windows office
              "/Users/hkropp/Google Drive/research/projects/campus/buckthorn/sapflux") # teaching mac
@@ -25,12 +25,15 @@ weather <- read.csv(paste0(dirWeather[userNumber],"/12_z6-10463 12Oct21.csv"),
                     skip=3, header=FALSE)
 weatherNames <- read.csv(paste0(dirWeather[userNumber],"/12_z6-10463 12Oct21.csv"),
                          nrows=3, header=FALSE)
+
 greenwood <- read.csv(paste0(dirData[userNumber],"/green ash olson paper measurements.csv"))
-
+#sapwood allometry
 buckthornSW <- read.csv(paste0(dirData[userNumber],"/buckthorn_allometry_info.csv"))
-
+#SLA
 buckthornSLA <- read.csv(paste0(dirData[userNumber],"/leaf area.csv"))
-
+#buchthorn dbh and leaf allom
+buckthornLA <- read.csv(paste0(dirData[userNumber],"/buckthorn_leaf_allom.csv"))
+#list of buckthorn removed with dbh
 buckthornRemove <- read.csv(paste0(dirData[userNumber],"/buckthorn_dbh.csv"))
 
 
