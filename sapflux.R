@@ -16,16 +16,18 @@ sversion <- "09_24_2021"
 
 
 #### read in data ----
+#dT sapflow
 sapRaw <- read.csv(paste0(dirData[userNumber],"/campbell/",sversion,"/Sapflow_TableDT.dat"),
                     header=FALSE,skip=4,na.strings=c("NAN"))
+#column names
 sapInfo <- read.csv(paste0(dirData[userNumber],"/campbell/",sversion,"/Sapflow_TableTC.dat"),
                    header=FALSE,skip=4,na.strings=c("NAN"))
-
+#weather data
 weather <- read.csv(paste0(dirWeather[userNumber],"/12_z6-10463 12Oct21.csv"),
                     skip=3, header=FALSE)
 weatherNames <- read.csv(paste0(dirWeather[userNumber],"/12_z6-10463 12Oct21.csv"),
                          nrows=3, header=FALSE)
-
+#green ash allometrry
 greenwood <- read.csv(paste0(dirData[userNumber],"/green ash olson paper measurements.csv"))
 #sapwood allometry
 buckthornSW <- read.csv(paste0(dirData[userNumber],"/buckthorn_allometry_info.csv"))
@@ -35,9 +37,12 @@ buckthornSLA <- read.csv(paste0(dirData[userNumber],"/leaf area.csv"))
 buckthornLA <- read.csv(paste0(dirData[userNumber],"/buckthorn_leaf_allom.csv"))
 #list of buckthorn removed with dbh
 buckthornRemove <- read.csv(paste0(dirData[userNumber],"/buckthorn_dbh.csv"))
+#read in sensor info
+
+sensors <- read.csv(paste0(dirData[userNumber],"/sensors_meta.csv"))
 
 
-#### organize sap flow ---
+#### organize sap flow ----
 heaterv <- data.frame(date =  ymd_hms(sapInfo[,1]),
                       ht1 = sapInfo[,165],
                       ht2 = sapInfo[,166])
@@ -60,13 +65,30 @@ datSap$DD <- datSap$doy + (datSap$hour/24)
 
 #### initial plots ----
 
-sensors <- read.csv("E:/Google Drive/research/projects/campus/buckthorn/sapflux/sensors_meta.csv")
-
 #add sapwood to sensors
+#buckthorn sapwood allometry
+#dbh vs sapwood 
+plot(buckthornSW$DBH.cm, buckthornSW$Sapwood.mm/10, pch=19)
+#linear regression sap
+bsap.lm <- lm(buckthornSW$Sapwood.mm/10 ~ buckthornSW$DBH.cm )
+summary(bsap.lm)
+
+bsap.calc <- mean( buckthornSW$Sapwood.mm/10)
+
+
+#dbh vs bark thickness
+plot(buckthornSW$DBH.cm, buckthornSW$bark.mm, pch=19)
+bbark.lm <- lm(buckthornSW$bark.mm/10 ~ buckthornSW$DBH.cm )
+summary(bbark.lm)
+#bark relationship not signficant
+#assume mean
+bbark.calc <- mean( buckthornSW$bark.mm/10)
+
+
 #ash allometry from Zeima Kassahun, Heidi J. Renninger 2021 Ag & Forest Met
 sensors$sd.cm <- ifelse(sensors$Type == "Ash", #if sensors is ash
                         -36.33 + (44.28*(1-exp(-0.1306*sensors$DBH.cm))),#allometry
-                        1)#if buckthorn fill place with 1 cm placeholder until allometry is fully measured
+                        bsap.calc)#if buckthorn fill place with 1 cm placeholder until allometry is fully measured
 #allometry from greenwood
 greenwood
 #organize data for easier calculations
@@ -154,6 +176,7 @@ night <- dtAll[dtAll$hour < 5|dtAll$hour >= 22,]
 maxnight1 <- night %>% 
   group_by(sensor, doy5) %>%
   filter(dT == max(dT),na.rm=TRUE)
+
 #remove duplicate maximums that occur for longer than 15 min
 #just take earliest measurement
 maxnight <- maxnight1  %>% 
@@ -244,16 +267,18 @@ ash.tree <- ash[ash$Direction == "N", ]
 
 ###############
 #Ash allometry from literature
-greenwood$sap.area <- greenwood$Sapwood.Volume.ft3/greenwood$Height.feet
+greenwood$sap.area <- greenwood$Sapwood.Volume..ft.3./greenwood$Total.Height..feet
 #30.48 cm in 1 foot
 greenwood$sap.area.cm <- 30.48*30.48*greenwood$sap.area 
-greenwood$dbh.cm <- (greenwood$DBH.in*2.54)
+greenwood$dbh.cm <- (greenwood$DBH..inches.*2.54)
 greenwood$treeArea <- ((greenwood$dbh.cm /2)^2)*pi
 
-plot(greenwood$dbh.cm,greenwood$sap.area.cm)
+#plot(greenwood$dbh.cm,greenwood$sap.area.cm)
 
-saparea.reg <- lm(greenwood$sap.area.cm ~ greenwood$dbh.cm)
-summary(saparea.reg)
+#saparea.reg <- lm(greenwood$sap.area.cm ~ greenwood$dbh.cm)
+#summary(saparea.reg)
+
+
 #sap cm2 = -9.6 + 8.854*DBH cm
 #meadows paper
 #LA (m2) = -66.185 +  6.579*DBH in cm
