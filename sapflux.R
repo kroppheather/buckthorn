@@ -4,7 +4,9 @@ library(lubridate)
 library(ggplot2)
 library(dplyr)
 
-#### data directory ----
+
+##############################
+#### data directory #### ----
 userNumber <- 1
 #sapflow and sensor data parent directory
 dirData <- c("E:/Google Drive/research/projects/campus/buckthorn/sapflux",#windows office
@@ -14,8 +16,8 @@ dirWeather <- c("E:/Google Drive/research/projects/Data/campus_weather/METER/",
 #sapflow download date for file
 sversion <- "09_24_2021"
 
-
-#### read in data ----
+##############################
+#### read in data ###### ----
 #dT sapflow
 sapRaw <- read.csv(paste0(dirData[userNumber],"/campbell/",sversion,"/Sapflow_TableDT.dat"),
                     header=FALSE,skip=4,na.strings=c("NAN"))
@@ -42,6 +44,7 @@ buckthornRemove <- read.csv(paste0(dirData[userNumber],"/buckthorn_dbh.csv"))
 sensors <- read.csv(paste0(dirData[userNumber],"/sensors_meta.csv"))
 
 
+##############################
 #### organize sap flow ----
 heaterv <- data.frame(date =  ymd_hms(sapInfo[,1]),
                       ht1 = sapInfo[,165],
@@ -61,15 +64,17 @@ datSap$doy <- yday(datSap$dateF)
 datSap$hour <- hour(datSap$dateF)+(minute(datSap$dateF)/60)
 datSap$DD <- datSap$doy + (datSap$hour/24)
 
+##############################
+#### sapwood depth Allometry ----
 
 
-#### initial plots ----
+# check sapwood depth for sensors
 
-#add sapwood to sensors
-#buckthorn sapwood allometry
-#dbh vs sapwood 
-plot(buckthornSW$DBH.cm, buckthornSW$Sapwood.mm/10, pch=19)
-#linear regression sap
+
+# buckthorn sapwood allometry
+# dbh vs sapwood 
+# plot(buckthornSW$DBH.cm, buckthornSW$Sapwood.mm/10, pch=19)
+# linear regression sap
 bsap.lm <- lm(buckthornSW$Sapwood.mm/10 ~ buckthornSW$DBH.cm )
 summary(bsap.lm)
 
@@ -80,18 +85,23 @@ bsap.calc <- mean( buckthornSW$Sapwood.mm/10)
 plot(buckthornSW$DBH.cm, buckthornSW$bark.mm, pch=19)
 bbark.lm <- lm(buckthornSW$bark.mm/10 ~ buckthornSW$DBH.cm )
 summary(bbark.lm)
-#bark relationship not signficant
-#assume mean
+# bark relationship not significant
+# assume mean
 bbark.calc <- mean( buckthornSW$bark.mm/10)
 
 
-#ash allometry from Zeima Kassahun, Heidi J. Renninger 2021 Ag & Forest Met
+# ash sapwood depth allometry from Zeima Kassahun, Heidi J. Renninger 2021 Ag & Forest Met
 sensors$sd.cm <- ifelse(sensors$Type == "Ash", #if sensors is ash
                         -36.33 + (44.28*(1-exp(-0.1306*sensors$DBH.cm))),#allometry
                         bsap.calc)#if buckthorn fill place with 1 cm placeholder until allometry is fully measured
-#allometry from greenwood
-greenwood
-#organize data for easier calculations
+
+
+
+
+##############################
+#### dT to v calcs ##### ----
+
+# organize data for easier calculations
 tabledt <- datSap
 
 
@@ -117,21 +127,21 @@ dtAll <- data.frame(date= rep(tabledt$date, times = 16),
                            tabledt[,17],
                            tabledt[,18]))
 
-#filter out unreliable data due to voltage regulator issues
+# filter out unreliable data due to voltage regulator issues
 
 #moved heaters to more reliable first regulator on july 2 10-10:30 and replaced reculator on July 6 10 am
-ggplot(heaterv, aes(x=date,y=ht1))+ 
-  geom_point()+
-  geom_line()
+#ggplot(heaterv, aes(x=date,y=ht1))+ 
+#  geom_point()+
+#  geom_line()
 
-ggplot(heaterv, aes(x=date,y=ht2))+ 
-  geom_point()+
-  geom_line()
+#ggplot(heaterv, aes(x=date,y=ht2))+ 
+#  geom_point()+
+#  geom_line()
 
 #indicate which heater
 dtAll$htrN <- ifelse(dtAll$sensor <= 8,1,
                      ifelse(dtAll$doy < 183 | dtAll$doy > 187, 2,1))
-heaterv[which(heaterv$ht1 == 0),]
+# heaterv[which(heaterv$ht1 == 0),]
 
 #calculate daily heater sd
 heater1sd <- aggregate(heaterv$ht1, by=list(doy=heaterv$doy),FUN="sd")
@@ -144,16 +154,17 @@ heatersAll <- data.frame(doy= c(heater1sd$doy,heater2sd$doy),
                          sd = c(heater1sd$x,heater2sd$x),
                          min=c(heater1min$x,heater2min$x))
 
-ggplot(heatersAll, aes(doy, sd, col=htrN))+
-  geom_point()
+#ggplot(heatersAll, aes(doy, sd, col=htrN))+
+ # geom_point()
 
 
-#join heater info back into dt
-#56448
+# join heater info back into dt
+
 dtAll <- left_join(dtAll,heatersAll, by=c("doy","htrN"))
 
 
-#################
+
+#### QC filter 1    #   
 #filter out days when voltage regulator was unreliable
 #either too variable or heaters turned off at any point
 dtAll <- dtAll[dtAll$sd <= 0.05 & dtAll$min >0,]
@@ -161,7 +172,9 @@ dtAll <- dtAll[dtAll$sd <= 0.05 & dtAll$min >0,]
 
 #################
 #check for dt outliers
-quantile(dtAll$dT, prob=seq(0,1,by=0.001))
+# quantile(dtAll$dT, prob=seq(0,1,by=0.001))
+
+#### QC filter 2    #  
 #definitely few outliers. 99.5% and above are unusually high
 dtAll <- dtAll[dtAll$dT <= quantile(dtAll$dT, prob=0.995),]
 
@@ -183,19 +196,20 @@ maxnight <- maxnight1  %>%
   group_by(sensor, doy5) %>%
   filter(hour == min(hour),na.rm=TRUE)
 
-ggplot(maxnight, aes(doy5,dT, color=sensor))+
-  geom_point()
-#isolate max and join back into table
+#ggplot(maxnight, aes(doy5,dT, color=sensor))+
+#  geom_point()
+
+# isolate max and join back into table
 maxJoin <- data.frame(sensor=maxnight$sensor, 
                       doy5=maxnight$doy5,
                       maxDT = maxnight$dT)
 
-#join backinto tabledt
+# join backinto tabledt
 dtCalct1 <- left_join(dtAll, maxJoin, by=c("sensor","doy5"))
-#join sensor info
+# join sensor info
 dtCalc <- left_join(dtCalct1 , sensors, by=c("sensor"="SensorID"))
 
-#from clearwater
+# from clearwater
 
 #sap velocity m s-1 (v)
 #v = 0.000119*k^1.231
@@ -203,10 +217,10 @@ dtCalc <- left_join(dtCalct1 , sensors, by=c("sensor"="SensorID"))
 
 #K= (dTmax - dT)/dT if sensor is fully within sapwood
 
-#otherwise correction is:
-#dt sap = (dT - b* Dtmax)/a
+# otherwise correction is:
+# dt sap = (dT - b* Dtmax)/a
 
-#a = proportion of probe in sapwood and b=1-a
+# a = proportion of probe in sapwood and b=1-a
 
 dtCalc$a <- ifelse(dtCalc$sd.cm >= 3,1,
                    dtCalc$sd.cm/3)
@@ -218,13 +232,14 @@ dtCalc$K <- (dtCalc$maxDT - dtCalc$dTCor)/dtCalc$dTCor
 dtCalc$velo <- 0.000119*(dtCalc$K^1.231)
 
 
-#seperate types
+# separate species types
 ash <- dtCalc[dtCalc$Type == "Ash",]
-buckthorn <- dtCalc[dtCalc$Type == "Buckthorn",]
+buckthorn <- dtCalc[dtCalc$Type == "buckthorn",]
 
+##############################
+#### N & S radial check   ----
 
-#############
-#compare N & S sensors for ash
+# compare N & S sensors for ash
 sens3 <- data.frame(date = ash$date[ash$sensor == 3],
                     veloN = ash$velo[ash$sensor == 3])
                      
@@ -253,19 +268,55 @@ treeD3 <- inner_join(sens15,sens16, by="date")
 treeDir <- rbind(treeD1,treeD2,treeD3)
 #check relationship
 azim.rel <- lm(treeDir$veloS ~ treeDir$veloN)
-summary(azim.rel)
+# summary(azim.rel)
 
-ggplot(treeDir, aes(veloN,veloS))+
-  geom_point()+
-  geom_abline()
+#ggplot(treeDir, aes(veloN,veloS))+
+  #geom_point()+
+  #geom_abline()
 
 #regression does not differ significantly from S=0 + 1*N
 
+# check buckthorn
+buckthornS <- unique(data.frame(Direction=buckthorn$Direction,
+                                sensor=buckthorn$sensor,
+                                ))
+
+sens7 <- data.frame(date = ash$date[ash$sensor == 7],
+                    veloN = ash$velo[ash$sensor == 7])
+
+sens9 <- data.frame(date = ash$date[ash$sensor == 9],
+                    veloS = ash$velo[ash$sensor == 9])
+
+treeB1 <- inner_join(sens3,sens4, by="date")
+
+sens8 <- data.frame(date = ash$date[ash$sensor == 8],
+                     veloN = ash$velo[ash$sensor == 8])
+
+sens10 <- data.frame(date = ash$date[ash$sensor == 10],
+                     veloS = ash$velo[ash$sensor == 10])
+
+treeB2 <- inner_join(sens8,sens10, by="date")
+
+treeBDir <- rbind(treeB1,treeB2)
+
+azimB.rel <- lm(treeBDir$veloS ~ treeBDir$veloN)
+# summary(azimB.rel)
+
+#ggplot(treeBDir, aes(veloN,veloS))+
+#  geom_point()+
+#  geom_abline()
+#regression does not differ significantly from S=0 + 1*N
+
+#use N for final data
 ash.tree <- ash[ash$Direction == "N", ]
 
+buckthron.tree <- buckthorn[buckthorn$Direction == "N", ]
 
 
-###############
+##############################
+#### canopy leaf allometry   ----
+
+
 #Ash allometry from literature
 greenwood$sap.area <- greenwood$Sapwood.Volume..ft.3./greenwood$Total.Height..feet
 #30.48 cm in 1 foot
