@@ -334,14 +334,18 @@ greenwood$treeArea <- ((greenwood$dbh.cm /2)^2)*pi
 #meadows paper
 #LA (m2) = -66.185 +  6.579*DBH in cm
 
-#### tree calculations ----
+##############################
+#### Canopy calculations   ----
 
 ash.tree$sap.areacm2 <- -9.6 + 8.854*ash.tree$DBH.cm
 #convert sap area to m2
 ash.tree$sap.aream2 <- 0.0001*ash.tree$sap.areacm2
 
 ash.tree$LA.m2 <- -66.185 +  6.579*ash.tree$DBH.cm
-range(ash.tree$LA.m2)
+
+
+##############################
+#### Flow calculations   ----
 
 #flow rate according to clearwater
 #F(L s-1) =  v(m s-1)* A (m2)
@@ -370,6 +374,8 @@ ash.treeNN$L.p.m2  <- ash.treeNN$L.p/ash.treeNN$LA.m2
 ash.L.m.day <- ash.treeNN %>%
   group_by(doy, Removal, sensor) %>%
   summarise(sum = sum(L.p.m2 ), n=length(L.p.m2))
+
+
 
 #summary table
 #flow L s every 15 min by treatment
