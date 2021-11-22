@@ -1,3 +1,41 @@
+###############################################
+### Sapflow calculations for bucktorn       ###
+### removal experiment. The following data  ###
+### frames of interest are outlined below   ###
+###############################################
+###############################################
+### ash.tree & buckthorn.tree:              ###  
+### raw measurements and calculations       ###
+###############################################
+### ash.Flow & buckthorn.Flow:              ###
+### L s-1 flow rate at each 15 min increment###
+### with average & spread over experimental ###
+### removal groups (C & R)                  ###
+###############################################
+### ash.Flow.m2 & buckthorn.Flow.m2         ###
+### L m-2 s-1 flow rater per m2 of canopy   ###
+### at each 15 min increment                ###
+### with average & spread over experimental ###
+### removal groups (C & R)                  ###
+###############################################
+### buckthorn.L.m2.day & ash.L.m2.day       ###
+### total water use in L per day per m2 of  ###
+### canopy leaf area                        ###
+### with average & spread over experimental ###
+### removal groups (C & R)                  ###
+###############################################
+### buckthorn.L.day & ash.L.day             ###
+### total water use in L per day per tree   ###
+### with average & spread over experimental ###
+### removal groups (C & R)                  ###
+###############################################
+### weather:                                ###
+### 15 min weather data from campus station ###
+###############################################
+
+
+
+
 
 #### libraries ----
 library(lubridate)
@@ -82,9 +120,9 @@ bsap.calc <- mean( buckthornSW$Sapwood.mm/10)
 
 
 #dbh vs bark thickness
-plot(buckthornSW$DBH.cm, buckthornSW$bark.mm, pch=19)
-bbark.lm <- lm(buckthornSW$bark.mm/10 ~ buckthornSW$DBH.cm )
-summary(bbark.lm)
+# plot(buckthornSW$DBH.cm, buckthornSW$bark.mm, pch=19)
+# bbark.lm <- lm(buckthornSW$bark.mm/10 ~ buckthornSW$DBH.cm )
+# summary(bbark.lm)
 # bark relationship not significant
 # assume mean
 bbark.calc <- mean( buckthornSW$bark.mm/10)
@@ -277,9 +315,7 @@ azim.rel <- lm(treeDir$veloS ~ treeDir$veloN)
 #regression does not differ significantly from S=0 + 1*N
 
 # check buckthorn
-buckthornS <- unique(data.frame(Direction=buckthorn$Direction,
-                                sensor=buckthorn$sensor,
-                                ))
+
 
 sens7 <- data.frame(date = ash$date[ash$sensor == 7],
                     veloN = ash$velo[ash$sensor == 7])
@@ -331,8 +367,7 @@ greenwood$treeArea <- ((greenwood$dbh.cm /2)^2)*pi
 
 
 #sap cm2 = -9.6 + 8.854*DBH cm
-#meadows paper
-#LA (m2) = -66.185 +  6.579*DBH in cm
+
 
 ##############################
 #### Canopy calculations   ----
@@ -354,9 +389,10 @@ buckthorn.tree$Htwd <- buckthorn.tree$DBH.cm - (bbark.calc*2) - (bsap.calc*2)
 #calculate sapwood area
 
 buckthorn.tree$sap.areacm2 <- (pi*(((bsap.calc/2)+(buckthorn.tree$Htwd/2))^2))-(pi*((buckthorn.tree$Htwd/2)^2))
-
+buckthorn.tree$sap.aream2 <-  0.0001*buckthorn.tree$sap.areacm2
 ## tree leaf area
-
+#meadows paper
+#LA (m2) = -66.185 +  6.579*DBH in cm
 ash.tree$LA.m2 <- -66.185 +  6.579*ash.tree$DBH.cm
 
 # buckthorn
@@ -370,24 +406,14 @@ buckthornLA$LA.m2 <-  buckthornLA$Leaf.area*0.0001
 
 
 #check relationship
-lm.log<- lm(log(buckthornLA$LA.m2) ~ log(buckthornLA$DBH.cm))
-summary(lm.log)
-
-plot(log(buckthornLA$DBH.cm), log(buckthornLA$LA.m2))
+# lm.log<- lm(log(buckthornLA$LA.m2) ~ log(buckthornLA$DBH.cm))
+# summary(lm.log)
+# plot(buckthornLA$DBH.cm, buckthornLA$LA.m2)
+# plot(log(buckthornLA$DBH.cm), log(buckthornLA$LA.m2))
 #regression log(LA (m2)) = -1.058 + 1.828 * log(dbh.cm)
 
-check <- exp(-1.058 + (1.828*log(buckthornLA$DBH.cm)))
-plot(buckthornLA$LA.m2,check)
-#estimate leaf dry mass
-
-plot(buckthornLA$DBH.cm, buckthornLA$Leaf.area*0.0001)
-
-#Leaf Area/ leaf Mass (cm2 / g)
-buckthorn.SLA <- mean(buckthornSLA$area.cm2/buckthornSLA$weight.g)
-
-buckthorn.tree$LA.cm2 <- buckthorn.tree$LM.g * buckthorn.SLA
-buckthorn.tree$LA.m2 <- 0.0001*buckthorn.tree$LA.cm2
-unique(buckthorn.tree$LA.m2)
+#estimate leaf area in m2
+buckthorn.tree$LA.m2 <- exp(-1.058 + (1.828*log(buckthorn.tree$DBH.cm)))
 
 ##############################
 #### Flow calculations   ----
@@ -397,9 +423,18 @@ unique(buckthorn.tree$LA.m2)
 
 ash.tree$Flow.m3.s <- ash.tree$velo * ash.tree$sap.aream2
 
+buckthorn.tree$Flow.m3.s <- buckthorn.tree$velo * buckthorn.tree$sap.aream2
+
+#convert to L per secton
+
 ash.tree$Flow.L.s <- ash.tree$Flow.m3.s * 1000
 
+buckthorn.tree$Flow.L.s <- buckthorn.tree$Flow.m3.s * 1000
+
+#normalize by canopy leaf area
 ash.tree$Flow.L.m2.s <- ash.tree$Flow.L.s /ash.tree$LA.m2 
+
+buckthorn.tree$Flow.L.m2.s <- buckthorn.tree$Flow.L.s /buckthorn.tree$LA.m2 
 
 #summarize total per day for each tree
 #remove NA
@@ -407,179 +442,115 @@ ash.treeNN <- ash.tree[is.na(ash.tree$Flow.L.s)==FALSE,]
 #calculate total water use by each tree in a day
 #total liters used in 15 min period
 ash.treeNN$L.p <- ash.treeNN$Flow.L.s* 60 *15
-#normalized by leaf area
-
-#sum up for each tree and day
-ash.L.day <- ash.treeNN %>%
-  group_by(doy, Removal, sensor) %>%
-  summarise(sum = sum(L.p), n=length(L.p))
-
+#per canopy area
 ash.treeNN$L.p.m2  <- ash.treeNN$L.p/ash.treeNN$LA.m2 
 
-ash.L.m.day <- ash.treeNN %>%
-  group_by(doy, Removal, sensor) %>%
-  summarise(sum = sum(L.p.m2 ), n=length(L.p.m2))
+#summarize total per day for each tree
+#remove NA
+buckthorn.treeNN <- buckthorn.tree[is.na(buckthorn.tree$Flow.L.s)==FALSE,]
+#calculate total water use by each tree in a day
+#total liters used in 15 min period
+buckthorn.treeNN$L.p <- buckthorn.treeNN$Flow.L.s* 60 *15
+# per canopy area
+buckthorn.treeNN$L.p.m2  <- buckthorn.treeNN$L.p/buckthorn.treeNN$LA.m2 
 
 
+##############################
+#### Summary tables    ----
 
 #summary table
 #flow L s every 15 min by treatment
-Flow.exp <- ash.treeNN %>%
+ash.Flow <- ash.treeNN %>%
   group_by(doy, hour, DD, Removal) %>%
   summarise(mean = mean(Flow.L.s),sd=sd(Flow.L.s), n=length(Flow.L.s))
 #flow L m-2 leaf s-1 by 15min
-Flow.m2.exp <- ash.treeNN %>%
+ash.Flow.m2 <- ash.treeNN %>%
+  group_by(doy, hour, DD, Removal) %>%
+  summarise(mean = mean(Flow.L.m2.s),
+            sd=sd(Flow.L.m2.s), 
+            n=length(Flow.L.m2.s))
+#only use time points with at least 3 trees
+ash.Flow <- ash.Flow[ ash.Flow$n >=3,]
+ash.Flow.m2 <- ash.Flow.m2[ ash.Flow.m2$n >=3,]
+ash.Flow$se <- ash.Flow$sd/sqrt(ash.Flow$n)
+ash.Flow.m2$se <- ash.Flow.m2$sd/sqrt(ash.Flow.m2$n)
+
+buckthorn.Flow <- buckthorn.treeNN %>%
+  group_by(doy, hour, DD, Removal) %>%
+  summarise(mean = mean(Flow.L.s),sd=sd(Flow.L.s), n=length(Flow.L.s))
+
+#flow L m-2 leaf s-1 by 15min
+buckthorn.Flow.m2 <- buckthorn.treeNN %>%
   group_by(doy, hour, DD, Removal) %>%
   summarise(mean = mean(Flow.L.m2.s),sd=sd(Flow.L.m2.s), n=length(Flow.L.m2.s))
+
 #only use time points with at least 3 trees
-Flow.exp <- Flow.exp[ Flow.exp$n >=3,]
+buckthorn.Flow <- buckthorn.Flow[ buckthorn.Flow$n >=3,]
+buckthorn.Flow.m2 <- buckthorn.Flow.m2[ buckthorn.Flow.m2$n >=3,]
+buckthorn.Flow$se <- buckthorn.Flow$sd/sqrt(buckthorn.Flow$n)
+buckthorn.Flow.m2$se <- buckthorn.Flow.m2$sd/sqrt(buckthorn.Flow.m2$n)
 
-#total liters per day used by the tree
-ash.L.day <- ash.L.day[ ash.L.day$n == 96,]
 
-L.day.exp <- ash.L.day %>%
+
+#total liters per day used by the tree 
+ash.L.sens <- ash.treeNN %>%
+  group_by(doy, Removal, sensor) %>%
+  summarise(sum = sum(L.p ), n=length(L.p))
+
+ash.L.sens <- ash.L.sens[ ash.L.sens$n == 96,]
+#calculate average daily transpiration in each experimental plot
+
+ash.L.day <- ash.L.sens %>%
   group_by(doy, Removal) %>%
   summarise(mean = mean(sum),sd=sd(sum), n=length(sum))
-L.day.exp <- L.day.exp[L.day.exp$n >= 3,]
-#total liters per day per m2 leaf area
-ash.L.m.day <- ash.L.m.day[ ash.L.m.day$n == 96,]
+ash.L.day <-ash.L.day [ash.L.day$n >= 3,]
+ash.L.day$se <- ash.L.day$sd/sqrt(ash.L.day$n)
 
-L.day.m2.exp <- ash.L.m.day %>%
+buckthorn.L.sens <- buckthorn.treeNN %>%
+  group_by(doy, Removal, sensor) %>%
+  summarise(sum = sum(L.p ), n=length(L.p))
+
+buckthorn.L.sens <- buckthorn.L.sens[ buckthorn.L.sens$n == 96,]
+#calculate average daily transpiration in each experimental plot
+
+buckthorn.L.day <- buckthorn.L.sens %>%
   group_by(doy, Removal) %>%
   summarise(mean = mean(sum),sd=sd(sum), n=length(sum))
-L.day.m2.exp <- L.day.m2.exp[L.day.m2.exp$n >= 3,]
+buckthorn.L.day <-buckthorn.L.day [buckthorn.L.day$n >= 3,]
+buckthorn.L.day$se <- buckthorn.L.day$sd/sqrt(buckthorn.L.day$n)
+
+#total liters per day used by the tree normalized per m2 of leaf area
+ash.L.m2.sens <- ash.treeNN %>%
+  group_by(doy, Removal, sensor) %>%
+  summarise(sum = sum(L.p.m2 ), n=length(L.p.m2))
+
+ash.L.m2.sens <- ash.L.m2.sens[ ash.L.m2.sens$n == 96,]
+#calculate average daily transpiration in each experimental plot
+
+ash.L.m2.day <- ash.L.m2.sens %>%
+  group_by(doy, Removal) %>%
+  summarise(mean = mean(sum),sd=sd(sum), n=length(sum))
+ash.L.m2.day <-ash.L.m2.day [ash.L.m2.day$n >= 3,]
+ash.L.m2.day$se <- ash.L.m2.day$sd/sqrt(ash.L.m2.day$n)
+
+buckthorn.L.m2.sens <- buckthorn.treeNN %>%
+  group_by(doy, Removal, sensor) %>%
+  summarise(sum = sum(L.p.m2 ), n=length(L.p.m2))
+
+buckthorn.L.m2.sens <- buckthorn.L.m2.sens[ buckthorn.L.m2.sens$n == 96,]
+#calculate average daily transpiration in each experimental plot
+
+buckthorn.L.m2.day <- buckthorn.L.m2.sens %>%
+  group_by(doy, Removal) %>%
+  summarise(mean = mean(sum),sd=sd(sum), n=length(sum))
+buckthorn.L.m2.day <-buckthorn.L.m2.day [buckthorn.L.m2.day$n >= 3,]
+buckthorn.L.m2.day$se <- buckthorn.L.m2.day$sd/sqrt(buckthorn.L.m2.day$n)
 
 
-
-ggplot(Flow.exp, aes(DD,mean, col=Removal))+
-  geom_line()+
-  geom_point()
-
-ggplot(Flow.m2.exp[Flow.m2.exp$doy >= 187,], aes(DD,mean, col=Removal))+
-  geom_line(alpha=0.25)+
-  geom_point(alpha=0.25)+
-  theme_classic()+
-  geom_errorbar(aes(ymin=mean-((sd/sqrt(n))*2), ymax=mean+((sd/sqrt(n))*2)), alpha=0.5) 
-  
-
-
-ggplot(L.day.m2.exp, aes(doy,mean, col=Removal))+
-  geom_point()+
-  geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=.2) 
-
-
-
-ggplot(L.day.exp, aes(doy,mean, col=Removal))+
-  geom_line()+
-  geom_point()+
-  geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=.2) 
-
-################
-#To do
-
-#need sapwood area allometry from paper
-#calculate sapflow in volume per time
-#filter out days with voltage regulator down
-
-
-ggplot(dtCalc[dtCalc$sensor ==1,], aes(x=DD,y=velo))+ 
-  geom_point()
-
-ggplot(dtCalc[dtCalc$sensor ==2,], aes(x=DD,y=velo))+ 
-  geom_point()
-
-ggplot(dtCalc[dtCalc$sensor ==3,], aes(x=DD,y=velo))+ 
-  geom_point()+
-  geom_line()
-ggplot(dtCalc[dtCalc$sensor ==4,], aes(x=DD,y=velo))+ 
-  geom_point()+
-  geom_line()
-ggplot(dtCalc[dtCalc$sensor ==5,], aes(x=DD,y=velo))+ 
-  geom_point()+
-  geom_line()
-ggplot(dtCalc[dtCalc$sensor ==6,], aes(x=DD,y=velo))+ 
-  geom_point()+
-  geom_line()
-ggplot(dtCalc[dtCalc$sensor ==7,], aes(x=DD,y=velo))+ 
-  geom_point()+
-  geom_line()
-ggplot(dtCalc[dtCalc$sensor ==8,], aes(x=DD,y=velo))+ 
-  geom_point()+
-  geom_line()
-ggplot(dtCalc[dtCalc$sensor ==9,], aes(x=DD,y=velo))+ 
-  geom_point()+
-  geom_line()
-ggplot(dtCalc[dtCalc$sensor ==10,], aes(x=DD,y=velo))+ 
-  geom_point()+
-  geom_line()
-ggplot(dtCalc[dtCalc$sensor ==11,], aes(x=DD,y=velo))+ 
-  geom_point()+
-  geom_line()
-ggplot(dtCalc[dtCalc$sensor ==12,], aes(x=DD,y=velo))+ 
-  geom_point()+
-  geom_line()
-ggplot(dtCalc[dtCalc$sensor ==13,], aes(x=DD,y=velo))+ 
-  geom_point()+
-  geom_line()
-ggplot(dtCalc[dtCalc$sensor ==14,], aes(x=DD,y=velo))+ 
-  geom_point()+
-  geom_line()
-ggplot(dtCalc[dtCalc$sensor ==15,], aes(x=DD,y=velo))+ 
-  geom_point()+
-  geom_line()
-ggplot(dtCalc[dtCalc$sensor ==16,], aes(x=DD,y=velo))+ 
-  geom_point()+
-  geom_line()
-
-
-
-
-ggplot(dtCalc[dtCalc$sensor ==1,], aes(x=DD,y=dT))+ 
-  geom_point()
-
-ggplot(dtCalc[dtCalc$sensor ==2,], aes(x=DD,y=dT))+ 
-  geom_point()
-
-ggplot(dtCalc[dtCalc$sensor ==3,], aes(x=DD,y=dT))+ 
-  geom_point()+
-  geom_line()
-ggplot(dtCalc[dtCalc$sensor ==4,], aes(x=DD,y=dT))+ 
-  geom_point()+
-  geom_line()
-ggplot(dtCalc[dtCalc$sensor ==5,], aes(x=DD,y=dT))+ 
-  geom_point()+
-  geom_line()
-ggplot(dtCalc[dtCalc$sensor ==6,], aes(x=DD,y=dT))+ 
-  geom_point()+
-  geom_line()
-ggplot(dtCalc[dtCalc$sensor ==7,], aes(x=DD,y=dT))+ 
-  geom_point()+
-  geom_line()
-ggplot(dtCalc[dtCalc$sensor ==8,], aes(x=DD,y=dT))+ 
-  geom_point()+
-  geom_line()
-ggplot(dtCalc[dtCalc$sensor ==9,], aes(x=DD,y=dT))+ 
-  geom_point()+
-  geom_line()
-ggplot(dtCalc[dtCalc$sensor ==10,], aes(x=DD,y=dT))+ 
-  geom_point()+
-  geom_line()
-ggplot(dtCalc[dtCalc$sensor ==11,], aes(x=DD,y=dT))+ 
-  geom_point()+
-  geom_line()
-ggplot(dtCalc[dtCalc$sensor ==12,], aes(x=DD,y=dT))+ 
-  geom_point()+
-  geom_line()
-ggplot(dtCalc[dtCalc$sensor ==13,], aes(x=DD,y=dT))+ 
-  geom_point()+
-  geom_line()
-ggplot(dtCalc[dtCalc$sensor ==14,], aes(x=DD,y=dT))+ 
-  geom_point()+
-  geom_line()
-ggplot(dtCalc[dtCalc$sensor ==15,], aes(x=DD,y=dT))+ 
-  geom_point()+
-  geom_line()
-ggplot(dtCalc[dtCalc$sensor ==16,], aes(x=DD,y=dT))+ 
-  geom_point()+
-  geom_line()
-
+rm(list=setdiff(ls(), c("ash.tree","buckthorn.tree",
+                        "ash.Flow","buckthorn.Flow",
+                        "ash.Flow.m2","buckthorn.Flow.m2",
+                        "buckthorn.L.m2.day", "ash.L.m2.day", 
+                        "buckthorn.L.day", "ash.L.day",  
+                        "weather")))
+                        
