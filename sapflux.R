@@ -310,7 +310,7 @@ azimB.rel <- lm(treeBDir$veloS ~ treeBDir$veloN)
 #use N for final data
 ash.tree <- ash[ash$Direction == "N", ]
 
-buckthron.tree <- buckthorn[buckthorn$Direction == "N", ]
+buckthorn.tree <- buckthorn[buckthorn$Direction == "N", ]
 
 
 ##############################
@@ -337,12 +337,57 @@ greenwood$treeArea <- ((greenwood$dbh.cm /2)^2)*pi
 ##############################
 #### Canopy calculations   ----
 
+## sapwood arrea
+
+# ash tree
 ash.tree$sap.areacm2 <- -9.6 + 8.854*ash.tree$DBH.cm
 #convert sap area to m2
 ash.tree$sap.aream2 <- 0.0001*ash.tree$sap.areacm2
 
+# buckthorn
+
+#calculate heartwood
+buckthorn.tree$Htwd <- buckthorn.tree$DBH.cm - (bbark.calc*2) - (bsap.calc*2)
+
+
+
+#calculate sapwood area
+
+buckthorn.tree$sap.areacm2 <- (pi*(((bsap.calc/2)+(buckthorn.tree$Htwd/2))^2))-(pi*((buckthorn.tree$Htwd/2)^2))
+
+## tree leaf area
+
 ash.tree$LA.m2 <- -66.185 +  6.579*ash.tree$DBH.cm
 
+# buckthorn
+
+#Leaf Area/ leaf Mass (cm2 / g)
+buckthorn.SLA <- mean(buckthornSLA$area.cm2/buckthornSLA$weight.g)
+
+buckthornLA$Leaf.area <- buckthorn.SLA * buckthornLA$Dry.Leaf.g
+buckthornLA$LA.m2 <-  buckthornLA$Leaf.area*0.0001
+
+
+
+#check relationship
+lm.log<- lm(log(buckthornLA$LA.m2) ~ log(buckthornLA$DBH.cm))
+summary(lm.log)
+
+plot(log(buckthornLA$DBH.cm), log(buckthornLA$LA.m2))
+#regression log(LA (m2)) = -1.058 + 1.828 * log(dbh.cm)
+
+check <- exp(-1.058 + (1.828*log(buckthornLA$DBH.cm)))
+plot(buckthornLA$LA.m2,check)
+#estimate leaf dry mass
+
+plot(buckthornLA$DBH.cm, buckthornLA$Leaf.area*0.0001)
+
+#Leaf Area/ leaf Mass (cm2 / g)
+buckthorn.SLA <- mean(buckthornSLA$area.cm2/buckthornSLA$weight.g)
+
+buckthorn.tree$LA.cm2 <- buckthorn.tree$LM.g * buckthorn.SLA
+buckthorn.tree$LA.m2 <- 0.0001*buckthorn.tree$LA.cm2
+unique(buckthorn.tree$LA.m2)
 
 ##############################
 #### Flow calculations   ----
