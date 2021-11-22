@@ -15,7 +15,11 @@ UsersAll <- data.frame(userID = c(1,2), userName=c("Student lab","Professor Krop
 
 #most recent tomst download
 #assumes downloading all data
-TomstD <- "09_04_2021"
+
+#Need to read in both files for control and removal plots due to sensor swap
+TomstD2 <- "09_04_2021"
+
+TomstD <- "07_28_2021"
 
 # File path for meter data
 DirMeter <- c("c:/Google Drive/research/projects/Data/campus_weather/METER/CSV/12_z6-10463 12Oct21.csv",
@@ -76,16 +80,6 @@ MeterMeta <- data.frame(name = c("Date","SolRad","Precip","LightningAct","Lightn
 #add in data flags and QAQC here
 
 
-############################
-########## plots-----------
-plot(meterTable$DY, meterTable$AirTemp,type="l")
-plot(meterTable$DY, meterTable$VPD,type="l")
-#range +- 2 degrees
-plot(MeterTableO1$DY, MeterTableO1$XLevel,type="l")
-plot(MeterTableO1$DY, MeterTableO1$YLevel,type="l")
-
-
-tail(MeterTableO1)
 
 ############################
 ########## TOMST-----------
@@ -104,6 +98,10 @@ TOMSTSensor <- data.frame(SN= c(91201802,
                                      "weather",
                                      "removal",
                                      "control" ))
+#94214743 & 94214744 were moved inside due to firmware issue after 7/28 download. 
+#On 8/3 94214742 was setup in control and   94214741 was put in removal around 10 am
+#due to weird firmware issue on other sensors
+#need to find label
 
 #read in files
 TMS1 <-  read.csv(paste0(DirTOMST[user], "/",tomstFiles[grep(paste0(TOMSTSensor$SN[3]),tomstFiles)]),
