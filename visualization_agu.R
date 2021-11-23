@@ -60,36 +60,106 @@ source("c:/Users/hkropp/Documents/GitHub/buckthorn/spatial_process.r")
 outDir <- "E:/Google Drive/research/projects/campus/buckthorn/AGU21/figures"
 
 
+
+##############################
+#### Standard plot argument ----
+
+#plot colors
+
+pt.cols <- c(rgb(0,114,178,155,maxColorValue=255), #control ash
+             rgb(213,94,0,155,maxColorValue=255), #removal ash
+             rgb(0,158,115,155,maxColorValue=255)) #buckthon control
+
+wd <- 16*2.54
+hd <- 4*2.54
+
+#point cex
+pt.c <- 4
+#line thickness
+ln.w <- 3
+#tick lwd
+tlw <- 3
+#axis tick label size
+alc <- 2.5
+#  axis label size
+llc <- 2.5
+#legend size
+lg.c <- 2
+
+
+
 ##############################
 #### daily T per unit leaf ----
 
+ash.L.m2.dayS <- ash.L.m2.day[ash.L.m2.day$doy >= 191, ]
+buckthorn.L.m2.dayS <- buckthorn.L.m2.day[buckthorn.L.m2.day$doy >= 191, ]
 
-range(ash.L.m2.day$mean)
-range(buckthorn.L.m2.day$mean)
 
-range(ash.L.m2.day$doy)
-range(buckthorn.L.m2.day$doy)
 
+
+png(paste0(outDir,"/Tday.png"), width = 20, height = 5, units = "in", res=300)
+#layout(matrix(c(1),ncol=1), width=lcm(wd),height=lcm(hd))
+par(mai=c(1.5,3,0.5,0.5))
 plot(c(0,0), c(0,0), ylim=c(0,0.5),
-     xlim=c(165,270),
+     xlim=c(190,270),
      axes=FALSE, xlab=" ",
      ylab= " ", xaxs = "i", yaxs="i")
-points(ash.L.m2.day$doy[ash.L.m2.day$Removal == "C"],
-  ash.L.m2.day$mean[ash.L.m2.day$Removal == "C"],
-  pch=19, col=rgb(0,114,178,155,maxColorValue=255),
-  type="b")
-points(ash.L.m2.day$doy[ash.L.m2.day$Removal == "R"],
-       ash.L.m2.day$mean[ash.L.m2.day$Removal == "R"],
-       pch=19, col=rgb(213,94,0,155,maxColorValue=255),
-       type="b")
+points(ash.L.m2.dayS$doy[ash.L.m2.dayS$Removal == "C"],
+       ash.L.m2.dayS$mean[ash.L.m2.dayS$Removal == "C"],
+       pch=19, col=pt.cols[1],
+       type="b", cex=pt.c, lwd=ln.w)
+arrows(ash.L.m2.dayS$doy[ash.L.m2.dayS$Removal == "C"],
+       ash.L.m2.dayS$mean[ash.L.m2.dayS$Removal == "C"]-ash.L.m2.dayS$se[ash.L.m2.dayS$Removal == "C"] ,
+       ash.L.m2.dayS$doy[ash.L.m2.dayS$Removal == "C"],
+       ash.L.m2.dayS$mean[ash.L.m2.dayS$Removal == "C"]+ash.L.m2.dayS$se[ash.L.m2.dayS$Removal == "C"],
+       code=0, lwd=ln.w, 
+       col=pt.cols[1])
 
-points(buckthorn.L.m2.day$doy,
-       buckthorn.L.m2.day$mean,
-       pch=19, col=rgb(0,158,115,155,maxColorValue=255),
-       type="b")
+points(ash.L.m2.dayS$doy[ash.L.m2.dayS$Removal == "R"],
+       ash.L.m2.dayS$mean[ash.L.m2.dayS$Removal == "R"],
+       pch=19, col=pt.cols[2],
+       type="b", cex=pt.c, lwd=ln.w)
+arrows(ash.L.m2.dayS$doy[ash.L.m2.dayS$Removal == "R"],
+       ash.L.m2.dayS$mean[ash.L.m2.dayS$Removal == "R"]-ash.L.m2.dayS$se[ash.L.m2.dayS$Removal == "R"] ,
+       ash.L.m2.dayS$doy[ash.L.m2.dayS$Removal == "R"],
+       ash.L.m2.dayS$mean[ash.L.m2.dayS$Removal == "R"]+ash.L.m2.dayS$se[ash.L.m2.dayS$Removal == "R"],
+       code=0, lwd=ln.w, 
+       col=pt.cols[2])
 
-axis(1, seq(170,270, by=10))
-axis(2, seq(0,0.5, by=0.1), las=2)
+points(buckthorn.L.m2.dayS$doy,
+       buckthorn.L.m2.dayS$mean,
+       pch=19, col=pt.cols[3],
+       type="b", cex=pt.c, lwd=ln.w)
+
+arrows(buckthorn.L.m2.dayS$doy,
+       buckthorn.L.m2.dayS$mean-buckthorn.L.m2.dayS$se,
+       buckthorn.L.m2.dayS$doy,
+       buckthorn.L.m2.dayS$mean+buckthorn.L.m2.dayS$se,
+       code=0, lwd=ln.w, 
+       col=pt.cols[3])
+
+legend("topright",
+       c("Ash control",
+         "Ash removal",
+         "Buckthorn control"),
+       col=pt.cols,
+       pch=19, lwd=ln.w,
+       cex=lg.c, pt.cex=pt.c, bty="n", horiz=TRUE)
+
+axis(1, seq(190,270, by=10), rep(" ", length(seq(190,270, by=10))), cex.axis=ax.c, lwd.ticks=tlw)
+axis(2, seq(0,0.5, by=0.1), rep(" ", length(seq(0,0.5, by=0.1))), las=2, cex.axis=ax.c, lwd.ticks=tlw)
+mtext( seq(190,270, by=10), at= seq(190,270, by=10), side=1, line=2, cex=alc)
+mtext( seq(0,0.5, by=0.1), at= seq(0,0.5, by=0.1), side=2, line=2, cex=alc, las=2)
+mtext(expression(paste("Canopy transpiration ")), side=2, line=9, cex=llc)
+mtext(expression(paste("(L m"^"-2","day"^"-1",")")), side=2, line=6, cex=llc)
+mtext("Day of year", side=1, line=6, cex=llc)
+dev.off()
+
+
+
+##############################
+#### soil moisture       ----
+
 
 
 ##############################

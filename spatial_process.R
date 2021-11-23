@@ -122,14 +122,22 @@ fl0726 <- stack(paste0(Ddir, "/07_26_21_buckthorn_p1/07_26_21_buckthorn_p1_trans
 fl0726c <- crop(fl0726, extentB)
 
 
+fl0904 <- stack(paste0(Ddir, "/09_04_buckthorn_p1/09_04_21_buckthorn_transparent_reflectance_blue.tif"),
+                paste0(Ddir, "/09_04_buckthorn_p1/09_04_21_buckthorn_transparent_reflectance_green.tif"),
+                paste0(Ddir, "/09_04_buckthorn_p1/09_04_21_buckthorn_transparent_reflectance_red.tif"),
+                paste0(Ddir, "/09_04_buckthorn_p1/09_04_21_buckthorn_transparent_reflectance_red edge.tif"),
+                paste0(Ddir, "/09_04_buckthorn_p1/09_04_21_buckthorn_transparent_reflectance_nir.tif"))
+
+fl0904c <- crop(fl0904, extentB)
+
 ##############################
 #### NDVI calculation ----
 
 #calculate NDVI 
 
 AllList <- list(fl0503c, fl0519c,fl0607c,fl0610c,fl0618c,fl0625c,fl0701c ,
-                fl0712c, fl0719c,fl0726c)
-DOY <- c(123,139,158,161,169,175,182,193,200,207)
+                fl0712c, fl0719c,fl0726c, fl0904c )
+DOY <- c(123,139,158,161,169,175,182,193,200,207,247)
 
 #calculate
 NDVIList <- list()
@@ -196,7 +204,7 @@ for(i in 1:nlayers(NDVIs)){
 ndviAll <- rbind(ndviDF[[1]],ndviDF[[2]],ndviDF[[3]],
                  ndviDF[[4]],ndviDF[[5]],ndviDF[[6]],
                  ndviDF[[7]],ndviDF[[8]],ndviDF[[9]],
-                 ndviDF[[10]] )
+                 ndviDF[[10]],ndviDF[[11]] )
 
 
 NDVIdoy <- ndviAll %>%
@@ -205,6 +213,7 @@ NDVIdoy <- ndviAll %>%
 
 ##############################
 #### leaf area allometry ----
+
 buckthorn.SLA <- mean(buckthornSLA$area.cm2/buckthornSLA$weight.g)
 #LA (m2) = -66.185 +  6.579*DBH in cm
 ash.tree$LA.m2 <- -66.185 +  6.579*ash.tree$DBH.cm
@@ -215,14 +224,9 @@ buckthorn.tree$LA.m2 <- exp(-1.058 + (1.828*log(buckthorn.tree$DBH.cm)))
 plot(seq(1,65), exp(-1.058 + (1.828*log(seq(1,65)))) )
 buckthornRemoval <- buckthornRemove[grepl("Removal",buckthornRemove$Plot..Control.Removal.Neither.) == TRUE,]
 
-buckthornRemoval$LA.m2 <- exp(-1.058 + (1.828*log(buckthornRemoval$DBH..cm.)))
-sum(buckthornRemoval$LA.m2)
-sum(buckthornRemoval$LA.m2)/st_area(removal)
-
-LAft.M2 <- (((((0.0287 *buckthornRemoval$DBH..cm.^1.6046)))*1000)*buckthorn.SLA)*0.0001
-
-plot(buckthornRemoval$DBH..cm.,LAft.M2 )
+# Mascaro and Schnitzer have a calculation from data that includes larger trees
+# smaller trees have similar values to our allometry
+buckthornRemoval$LAft.M2 <- (((((0.0287 *buckthornRemoval$DBH..cm.^1.6046)))*1000)*buckthorn.SLA)*0.0001
 
 
-ls()
 
