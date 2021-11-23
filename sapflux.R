@@ -29,9 +29,7 @@
 ### with average & spread over experimental ###
 ### removal groups (C & R)                  ###
 ###############################################
-### weather:                                ###
-### 15 min weather data from campus station ###
-###############################################
+
 
 
 
@@ -62,11 +60,7 @@ sapRaw <- read.csv(paste0(dirData[userNumber],"/campbell/",sversion,"/Sapflow_Ta
 #column names
 sapInfo <- read.csv(paste0(dirData[userNumber],"/campbell/",sversion,"/Sapflow_TableTC.dat"),
                    header=FALSE,skip=4,na.strings=c("NAN"))
-#weather data
-weather <- read.csv(paste0(dirWeather[userNumber],"/12_z6-10463 12Oct21.csv"),
-                    skip=3, header=FALSE)
-weatherNames <- read.csv(paste0(dirWeather[userNumber],"/12_z6-10463 12Oct21.csv"),
-                         nrows=3, header=FALSE)
+
 #green ash allometrry
 greenwood <- read.csv(paste0(dirData[userNumber],"/green ash olson paper measurements.csv"))
 #sapwood allometry

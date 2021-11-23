@@ -17,9 +17,10 @@ UsersAll <- data.frame(userID = c(1,2), userName=c("Student lab","Professor Krop
 #assumes downloading all data
 
 #Need to read in both files for control and removal plots due to sensor swap
-TomstD2 <- "09_04_2021"
+
 
 TomstD <- "07_28_2021"
+TomstD2 <- "09_04_2021"
 
 # File path for meter data
 DirMeter <- c("c:/Google Drive/research/projects/Data/campus_weather/METER/CSV/12_z6-10463 12Oct21.csv",
@@ -27,8 +28,8 @@ DirMeter <- c("c:/Google Drive/research/projects/Data/campus_weather/METER/CSV/1
 
 
 
-DirTOMST <- c(paste0("c:/Google Drive/research/projects/Data/campus_weather/TOMST/",TomstD),
-              paste0("E:/Google Drive/research/projects/Data/campus_weather/TOMST/",TomstD)) 
+DirTOMST <- c(paste0("c:/Google Drive/research/projects/Data/campus_weather/TOMST"),
+              paste0("E:/Google Drive/research/projects/Data/campus_weather/TOMST")) 
 
 # Select user - change if needed
 user <- 2
@@ -85,80 +86,116 @@ MeterMeta <- data.frame(name = c("Date","SolRad","Precip","LightningAct","Lightn
 ########## TOMST-----------
 #get files
 
-tomstFiles <- list.files(DirTOMST)
+tomstFiles1 <- list.files(paste0(DirTOMST[user],"/",TomstD))
+tomstFiles2 <- list.files(paste0(DirTOMST[user],"/",TomstD2))
 
 TOMSTSensor <- data.frame(SN= c(91201802,
                                 91200065,
                                 94207592,
                                 94214744,
-                                94214743),
-                          Height = c(0.25,0.5,0,0,0),
+                                94214743,
+                                94214741,
+                                94214742),
+                          Height = c(0.25,0.5,0,0,0,0,0),
                           location=c("weather",
                                      "weather",
                                      "weather",
                                      "removal",
-                                     "control" ))
-#94214743 & 94214744 were moved inside due to firmware issue after 7/28 download. 
-#On 8/3 94214742 was setup in control and   94214741 was put in removal around 10 am
-#due to weird firmware issue on other sensors
-#need to find label
+                                     "control",
+                                     "removal",
+                                     "control"
+                                     ),
+                          timeP = c(2,2,2,1,1,2,2))
+# 94214743 & 94214744 were moved inside due to firmware issue after 7/28 download. 
+# On 8/3 94214742 was setup in control and   94214741 was put in removal around 10 am
+# due to weird firmware issue on other sensors
+# need to find label
 
+
+#blank column in new firmware data
 #read in files
-TMS1 <-  read.csv(paste0(DirTOMST[user], "/",tomstFiles[grep(paste0(TOMSTSensor$SN[3]),tomstFiles)]),
-                  sep=";",header=FALSE)
-TMS2 <-  read.csv(paste0(DirTOMST[user], "/",tomstFiles[grep(paste0(TOMSTSensor$SN[4]),tomstFiles)]),
-                  sep=";",header=FALSE)
-TMS3 <-  read.csv(paste0(DirTOMST[user], "/",tomstFiles[grep(paste0(TOMSTSensor$SN[5]),tomstFiles)]),
-                  sep=";",header=FALSE)
+TMS1p2 <-  read.csv(paste0(DirTOMST[user],"/",TomstD2, "/",tomstFiles2[grep(paste0(TOMSTSensor$SN[3]),tomstFiles2)]),
+                  sep=";",header=FALSE)[,1:9]
+TMS2p2 <-  read.csv(paste0(DirTOMST[user],"/",TomstD2, "/",tomstFiles2[grep(paste0(TOMSTSensor$SN[6]),tomstFiles2)]),
+                  sep=";",header=FALSE)[,1:9]
+TMS3p2 <-  read.csv(paste0(DirTOMST[user],"/",TomstD2, "/",tomstFiles2[grep(paste0(TOMSTSensor$SN[7]),tomstFiles2)]),
+                  sep=";",header=FALSE)[,1:9]
+
+TMS2p1 <-  read.csv(paste0(DirTOMST[user],"/",TomstD, "/",tomstFiles1[grep(paste0(TOMSTSensor$SN[4]),tomstFiles1)]),
+                    sep=";",header=FALSE)
+TMS3p1 <-  read.csv(paste0(DirTOMST[user],"/",TomstD, "/",tomstFiles1[grep(paste0(TOMSTSensor$SN[5]),tomstFiles1)]),
+                    sep=";",header=FALSE)
 #tms temps:  -6, +2 and +15cm
 TMScols <- c("record","date","tz","Tm6","T2","T15","SM","shake","errFlag")
 
-colnames(TMS1) <- TMScols
-colnames(TMS2) <- TMScols
-colnames(TMS3) <- TMScols
+colnames(TMS1p2) <- TMScols
+colnames(TMS2p2) <- TMScols
+colnames(TMS3p2) <- TMScols
+colnames(TMS2p1) <- TMScols
+colnames(TMS3p1) <- TMScols
 
-TMS1$dateF <- ymd_hm(TMS1$date)
-TMS1$estD <- with_tz(TMS1$dateF,tzone="America/New_York" )
+#new tomst sensors use commas instead of periods for decimal
 
-TMS2$dateF <- ymd_hm(TMS2$date)
-TMS2$estD <- with_tz(TMS2$dateF,tzone="America/New_York" )
+TMS1p2$Tm6 <- as.numeric(gsub("\\,","\\.",TMS1p2$Tm6))
+TMS1p2$T2 <- as.numeric(gsub("\\,","\\.",TMS1p2$T2))
+TMS1p2$T15 <- as.numeric(gsub("\\,","\\.",TMS1p2$T15))
 
-TMS3$dateF <- ymd_hm(TMS3$date)
-TMS3$estD <- with_tz(TMS3$dateF,tzone="America/New_York" )
+TMS2p2$Tm6 <- as.numeric(gsub("\\,","\\.",TMS2p2$Tm6))
+TMS2p2$T2 <- as.numeric(gsub("\\,","\\.",TMS2p2$T2))
+TMS2p2$T15 <- as.numeric(gsub("\\,","\\.",TMS2p2$T15))
+
+TMS3p2$Tm6 <- as.numeric(gsub("\\,","\\.",TMS3p2$Tm6))
+TMS3p2$T2 <- as.numeric(gsub("\\,","\\.",TMS3p2$T2))
+TMS3p2$T15 <- as.numeric(gsub("\\,","\\.",TMS3p2$T15))
 
 
-TMS1$location <- rep("weather",nrow(TMS1))
-TMS2$location <- rep("removal",nrow(TMS2))
-TMS3$location <- rep("control",nrow(TMS3))
 
-TMSbind <- rbind(TMS1,TMS2,TMS3)
+TMS1p2$dateF <- ymd_hm(TMS1p2$date)
+TMS1p2$estD <- with_tz(TMS1p2$dateF,tzone="America/New_York" )
+
+TMS2p2$dateF <- ymd_hm(TMS2p2$date)
+TMS2p2$estD <- with_tz(TMS2p2$dateF,tzone="America/New_York" )
+
+TMS3p2$dateF <- ymd_hm(TMS3p2$date)
+TMS3p2$estD <- with_tz(TMS3p2$dateF,tzone="America/New_York" )
+
+TMS2p1$dateF <- ymd_hm(TMS2p1$date)
+TMS2p1$estD <- with_tz(TMS2p1$dateF,tzone="America/New_York" )
+
+TMS3p1$dateF <- ymd_hm(TMS3p1$date)
+TMS3p1$estD <- with_tz(TMS3p1$dateF,tzone="America/New_York" )
 
 #omit error flag data
-TMSAll <- TMSbind[TMSbind$errFlag != 16, ]
+TMS2p1 <- TMS2p1[TMS2p1$errFlag != 16, ]
+TMS3p1 <- TMS3p1[TMS3p1$errFlag != 16, ]
 
-#correct soil moisture
-#use loam until can confirm with geology
-TMSAll$SM.cor <- (-0.00000005*(TMSAll$SM^2)) + (0.000398*TMSAll$SM) -0.291
-
-TMSAll$SM.c <- ifelse(TMSAll$SM.cor <= 0.01,NA,TMSAll$SM.cor)
-
-ggplot(TMSAll, aes(estD ,SM.c, col=location))+
-  geom_point()+
-  geom_line()
+# omit data before new sensors were deployed
+# original sensors set up at 7/2 10: 25
+# but animal destruction impacted removal early on Subset to day where fixed
+TMS2p1 <- TMS2p1[TMS2p1$estD >= "2021-07-08 00:00:00",]
+TMS3p1 <- TMS3p1[TMS3p1$estD >= "2021-07-08 00:00:00",]
 
 
-ggplot(TMSAll[TMSAll$location != "weather",], aes(estD ,SM.c, col=location))+
-  geom_point()+
-  geom_line()
+TMS2p2 <- TMS2p2[TMS2p2$estD >= "2021-08-03 10:15:00",]
+TMS3p2 <- TMS3p2[TMS3p2$estD >= "2021-08-03 10:15:00",]
+
+control <- rbind(TMS3p1,TMS3p2)
+removal <- rbind(TMS2p1,TMS2p2)
+weather <- TMS1p2
+
+weather$location <- rep("weather",nrow(weather))
+removal$location <- rep("removal",nrow(removal))
+control$location <- rep("control",nrow(control))
+
+# loam calculation
+weather$SM.cor <- (-0.00000005*(weather$SM^2)) + (0.000398*weather$SM) -0.291
+removal$SM.cor <- (-0.00000005*(removal$SM^2)) + (0.000398*removal$SM) -0.291
+control$SM.cor <- (-0.00000005*(control$SM^2)) + (0.000398*control$SM) -0.291
 
 
-ggplot(TMSAll[TMSAll$location != "weather",], aes(estD ,Tm6, col=location))+
-  geom_point()+
-  geom_line()
-#removal
-TMS2Q <-  TMS2[TMS2$errFlag != 16, ]
-#control
-TMS3Q <-  TMS3[TMS3$errFlag != 16, ]
-TMScomp <- inner_join(TMS2Q, TMS3Q, by="estD")
-TMScomps <- data.frame(estD= TMScomp$estD,
-                       diffT= TMScomp$Tm6.x-TMScomp$Tm6.y)
+TMSbind <- rbind(weather,removal,control)
+rm(TMS2p1)
+rm(TMS1p2) 
+rm(TMS2p2)
+rm(TMS3p1)
+rm(TMS3p2)

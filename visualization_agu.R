@@ -38,12 +38,21 @@
 ### with average & spread over experimental ###
 ### removal groups (C & R)                  ###
 ###############################################
-### weather:                                ###
-### 15 min weather data from campus station ###
+### Uses calculations from weather.R to get ###
+### the data frames described below:        ###
+###############################################
+### meterTable & meterMeta:                 ###
+### 15 min obs of weather                   ###
+###############################################
+### control & removal & weather             ###
+### observations from TMS 4 at each location###
+###############################################
+### TMSbind                                 ###
+### all TMS in same data frame              ###
 ###############################################
 
 source("c:/Users/hkropp/Documents/GitHub/buckthorn/sapflux.r")
-
+source("c:/Users/hkropp/Documents/GitHub/buckthorn/weather.r")
 ##############################
 #### output directory ### ----
 
@@ -99,4 +108,15 @@ points(ash.Fsub$DD[ash.Fsub$Removal == "R"],
        ash.Fsub$ml.m2.s[ash.Fsub$Removal == "R"],
        pch=19, col=rgb(213,94,0,155,maxColorValue=255), type="b")
 
+##############################
+#### met with flow per unit leaf ----
 
+meterSub <- na.omit(meterTable[meterTable$doy  >= 170 & meterTable$doy <= 270 & meterTable$year == 2021, ])
+
+plot(meterSub$DD, meterSub$SolRad,
+     pch=19, col=rgb(0,114,178,155,maxColorValue=255), type="b")
+plot(meterSub$DD, meterSub$VPD,
+     pch=19, col=rgb(0,114,178,155,maxColorValue=255), type="b")
+
+plot(meterSub$DD, meterSub$Precip,
+     pch=19, col=rgb(0,114,178,155,maxColorValue=255), type="b")
