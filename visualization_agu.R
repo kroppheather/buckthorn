@@ -77,6 +77,9 @@ hd <- 4*2.54
 pt.c <- 4
 #line thickness
 ln.w <- 3
+
+#line thickness for line only
+lln.w <- 4
 #tick lwd
 tlw <- 3
 #axis tick label size
@@ -95,10 +98,7 @@ ash.L.m2.dayS <- ash.L.m2.day[ash.L.m2.day$doy >= 191, ]
 buckthorn.L.m2.dayS <- buckthorn.L.m2.day[buckthorn.L.m2.day$doy >= 191, ]
 
 
-
-
 png(paste0(outDir,"/Tday.png"), width = 20, height = 5, units = "in", res=300)
-#layout(matrix(c(1),ncol=1), width=lcm(wd),height=lcm(hd))
 par(mai=c(1.5,3,0.5,0.5))
 plot(c(0,0), c(0,0), ylim=c(0,0.5),
      xlim=c(190,270),
@@ -157,10 +157,105 @@ dev.off()
 
 
 
+
+
 ##############################
 #### soil moisture       ----
 
+TMSbind$year <- year(TMSbind$estD)
+TMSbind$doy <-  yday(TMSbind$estD)
+TMSbind$DD <- yday(TMSbind$estD) + ((hour(TMSbind$estD)+(minute(TMSbind$estD)/60))/24)
 
+TMSsub <- TMSbind[TMSbind$doy >= 191 & TMSbind$year == 2021,]
+
+png(paste0(outDir,"/soil_moist.png"), width = 20, height = 5, units = "in", res=300)
+par(mai=c(1.5,3,0.5,0.5))
+plot(c(0,0), c(0,0), ylim=c(0.3,0.6),
+     xlim=c(190,270),
+     axes=FALSE, xlab=" ",
+     ylab= " ", xaxs = "i", yaxs="i")
+
+points(TMSsub$DD[TMSsub$location == "control" & TMSsub$estD <= "2021-07-16 11:15:00"],
+       TMSsub$SM.cor[TMSsub$location == "control"& TMSsub$estD <= "2021-07-16 11:15:00"],
+       pch=19, col=pt.cols[1],
+       type="l", lwd=lln.w)
+
+points(TMSsub$DD[TMSsub$location == "control" & TMSsub$estD >= "2021-08-03 10:15:00"],
+       TMSsub$SM.cor[TMSsub$location == "control"& TMSsub$estD >= "2021-08-03 10:15:00"],
+       pch=19, col=pt.cols[1],
+       type="l", lwd=lln.w)
+
+points(TMSsub$DD[TMSsub$location == "removal"& TMSsub$estD <= "2021-07-16 11:15:00"],
+       TMSsub$SM.cor[TMSsub$location == "removal"& TMSsub$estD <= "2021-07-16 11:15:00"],
+       pch=19, col=pt.cols[2],
+       type="l", lwd=lln.w)
+
+points(TMSsub$DD[TMSsub$location == "removal" & TMSsub$estD >= "2021-08-03 10:15:00"],
+       TMSsub$SM.cor[TMSsub$location == "removal"& TMSsub$estD >= "2021-08-03 10:15:00"],
+       pch=19, col=pt.cols[2],
+       type="l", lwd=lln.w)
+
+legend("topright",
+       c("Control",
+         "Removal"),
+       col=pt.cols[1:2],
+        lwd=ln.w,
+       cex=lg.c, pt.cex=pt.c, bty="n", horiz=TRUE)
+axis(1, seq(190,270, by=10), rep(" ", length(seq(190,270, by=10))), cex.axis=ax.c, lwd.ticks=tlw)
+axis(2, seq(0.3,0.5, by=0.1), rep(" ", length(seq(0.3,0.5, by=0.1))), las=2, cex.axis=ax.c, lwd.ticks=tlw)
+mtext( seq(190,270, by=10), at= seq(190,270, by=10), side=1, line=2, cex=alc)
+mtext( seq(0.3,0.5, by=0.1), at= seq(0.3,0.5, by=0.1), side=2, line=2, cex=alc, las=2)
+mtext(expression(paste("Soil moisture ")), side=2, line=9, cex=llc)
+mtext(expression(paste("(m"^"3","m"^"-3",")")), side=2, line=6, cex=llc)
+mtext("Day of year", side=1, line=6, cex=llc)
+
+dev.off()
+
+##############################
+#### soil temperature       ----
+
+png(paste0(outDir,"/soil_temperature.png"), width = 20, height = 5, units = "in", res=300)
+par(mai=c(1.5,3,0.5,0.5))
+plot(c(0,0), c(0,0), ylim=c(15,25),
+     xlim=c(190,270),
+     axes=FALSE, xlab=" ",
+     ylab= " ", xaxs = "i", yaxs="i")
+
+points(TMSsub$DD[TMSsub$location == "control" & TMSsub$estD <= "2021-07-16 11:15:00"],
+       TMSsub$Tm6[TMSsub$location == "control"& TMSsub$estD <= "2021-07-16 11:15:00"],
+       pch=19, col=pt.cols[1],
+       type="l", lwd=lln.w)
+
+points(TMSsub$DD[TMSsub$location == "control" & TMSsub$estD >= "2021-08-03 10:15:00"],
+       TMSsub$Tm6[TMSsub$location == "control"& TMSsub$estD >= "2021-08-03 10:15:00"],
+       pch=19, col=pt.cols[1],
+       type="l", lwd=lln.w)
+
+points(TMSsub$DD[TMSsub$location == "removal"& TMSsub$estD <= "2021-07-16 11:15:00"],
+       TMSsub$Tm6[TMSsub$location == "removal"& TMSsub$estD <= "2021-07-16 11:15:00"],
+       pch=19, col=pt.cols[2],
+       type="l", lwd=lln.w)
+
+points(TMSsub$DD[TMSsub$location == "removal" & TMSsub$estD >= "2021-08-03 10:15:00"],
+       TMSsub$Tm6[TMSsub$location == "removal"& TMSsub$estD >= "2021-08-03 10:15:00"],
+       pch=19, col=pt.cols[2],
+       type="l", lwd=lln.w)
+
+legend("topright",
+       c("Control",
+         "Removal"),
+       col=pt.cols[1:2],
+       lwd=ln.w,
+       cex=lg.c, pt.cex=pt.c, bty="n", horiz=TRUE)
+axis(1, seq(190,270, by=10), rep(" ", length(seq(190,270, by=10))), cex.axis=ax.c, lwd.ticks=tlw)
+axis(2, seq(15,25, by=2), rep(" ", length(seq(15,25, by=2))), las=2, cex.axis=ax.c, lwd.ticks=tlw)
+mtext( seq(190,270, by=10), at= seq(190,270, by=10), side=1, line=2, cex=alc)
+mtext( seq(15,25, by=2), at= seq(15,25, by=2), side=2, line=2, cex=alc, las=2)
+mtext(expression(paste("Soil temperature ")), side=2, line=9, cex=llc)
+mtext(expression(paste("(",degree,"C)")), side=2, line=6, cex=llc)
+mtext("Day of year", side=1, line=6, cex=llc)
+
+dev.off()
 
 ##############################
 #### flow per unit leaf ----
