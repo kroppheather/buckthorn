@@ -53,6 +53,7 @@
 
 source("c:/Users/hkropp/Documents/GitHub/buckthorn/sapflux.r")
 source("c:/Users/hkropp/Documents/GitHub/buckthorn/weather.r")
+source("c:/Users/hkropp/Documents/GitHub/buckthorn/spatial_process.r")
 ##############################
 #### output directory ### ----
 
