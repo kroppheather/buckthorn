@@ -160,13 +160,36 @@ dev.off()
 
 
 ##############################
+#### leaf area histogram   ----
+
+
+#is 60 cm tree valid? Double check with Aaron and students
+
+buckthornRemovals <- buckthornRemoval[buckthornRemoval$DBH..cm. < 60,]
+
+hist(buckthornRemovals$LAft.M2, breaks=seq(0,240,by=20))
+
+#exclude LA from large tree because unsure
+
+
+mean(buckthorn.L.m2.day$mean)*sum(buckthornRemovals$LAft.M2)
+
+
+test <- inner_join(controlT, removalT, by="estD")
+
+tempD <- test$Tm6.x - test$Tm6.y
+t.test(tempD, mu=0)
+#negative difference = removal is warmer than control
+moistD <- test$SM.cor.x - test$SM.cor.y
+t.test(moistD, mu=0)
+#positive difference = removal has less moisture than control
+
+
+
+##############################
 #### soil moisture       ----
 
-TMSbind$year <- year(TMSbind$estD)
-TMSbind$doy <-  yday(TMSbind$estD)
-TMSbind$DD <- yday(TMSbind$estD) + ((hour(TMSbind$estD)+(minute(TMSbind$estD)/60))/24)
 
-TMSsub <- TMSbind[TMSbind$doy >= 191 & TMSbind$year == 2021,]
 
 png(paste0(outDir,"/soil_moist.png"), width = 20, height = 5, units = "in", res=300)
 par(mai=c(1.5,3,0.5,0.5))
@@ -256,6 +279,11 @@ mtext(expression(paste("(",degree,"C)")), side=2, line=6, cex=llc)
 mtext("Day of year", side=1, line=6, cex=llc)
 
 dev.off()
+
+
+
+
+
 
 ##############################
 #### flow per unit leaf ----
