@@ -114,7 +114,7 @@ ash.L.m2.dayS <- ash.L.m2.day[ash.L.m2.day$doy >= 191, ]
 buckthorn.L.m2.dayS <- buckthorn.L.m2.day[buckthorn.L.m2.day$doy >= 191, ]
 
 
-png(paste0(outDir,"/Tday.png"), width = 20, height = 5, units = "in", res=300)
+png(paste0(outDir,"/Tday.png"), width = 20, height = 7, units = "in", res=300)
 par(mai=c(1.5,3,0.5,0.5))
 plot(c(0,0), c(0,0), ylim=c(0,0.5),
      xlim=c(190,270),
@@ -168,7 +168,7 @@ mtext( seq(190,270, by=10), at= seq(190,270, by=10), side=1, line=2, cex=alc)
 mtext( seq(0,0.5, by=0.1), at= seq(0,0.5, by=0.1), side=2, line=2, cex=alc, las=2)
 mtext(expression(paste("Canopy transpiration ")), side=2, line=9, cex=llc)
 mtext(expression(paste("(L m"^"-2","day"^"-1",")")), side=2, line=6, cex=llc)
-mtext("Day of year", side=1, line=6, cex=llc)
+mtext("Day of year", side=1, line=4, cex=llc)
 dev.off()
 
 
@@ -194,7 +194,7 @@ mean(buckthorn.L.m2.day$mean)*sum(buckthornRemovals$LAft.M2)
 range(buckthornRemovals$LAft.M2)
 
 
-png(paste0(outDir,"/leaf_area.png"), width = 8, height = 5, units = "in", res=300)
+png(paste0(outDir,"/leaf_area.png"), width = 8, height = 7, units = "in", res=300)
 par(mai=c(1.5,1.5,0.5,0.5))
 
 plot(c(0,0), c(0,0), ylim=c(0,10),
@@ -266,7 +266,7 @@ for(i in 1:length(NDVIdoy)){
 
 width.box <- 0.5
 
-png(paste0(outDir,"/NDVI.png"), width = 12, height = 5, units = "in", res=300)
+png(paste0(outDir,"/NDVI.png"), width = 12, height = 7, units = "in", res=300)
 par(mai=c(1.5,1.5,0.5,0.5))
 
 plot(c(0,1),c(0,1), xlim=c(0,70), ylim=c(0,1), 
@@ -341,7 +341,7 @@ dev.off()
 
 
 
-png(paste0(outDir,"/soil_moist.png"), width = 20, height = 5, units = "in", res=300)
+png(paste0(outDir,"/soil_moist.png"), width = 20, height = 7, units = "in", res=300)
 par(mai=c(1.5,3,0.5,0.5))
 plot(c(0,0), c(0,0), ylim=c(0.3,0.6),
      xlim=c(190,270),
@@ -387,7 +387,7 @@ dev.off()
 ##############################
 #### soil temperature       ----
 
-png(paste0(outDir,"/soil_temperature.png"), width = 20, height = 5, units = "in", res=300)
+png(paste0(outDir,"/soil_temperature.png"), width = 20, height = 7, units = "in", res=300)
 par(mai=c(1.5,3,0.5,0.5))
 plot(c(0,0), c(0,0), ylim=c(15,25),
      xlim=c(190,270),
@@ -426,7 +426,7 @@ mtext( seq(190,270, by=10), at= seq(190,270, by=10), side=1, line=2, cex=alc)
 mtext( seq(15,25, by=2), at= seq(15,25, by=2), side=2, line=2, cex=alc, las=2)
 mtext(expression(paste("Soil temperature ")), side=2, line=9, cex=llc)
 mtext(expression(paste("(",degree,"C)")), side=2, line=6, cex=llc)
-mtext("Day of year", side=1, line=6, cex=llc)
+mtext("Day of year", side=1, line=4, cex=llc)
 
 dev.off()
 
