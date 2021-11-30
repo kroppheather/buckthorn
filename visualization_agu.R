@@ -74,6 +74,14 @@ pt.cols2 <- c(rgb(0,114,178,50,maxColorValue=255), #control ash
              rgb(213,94,0,50,maxColorValue=255), #removal ash
              rgb(0,158,115,50,maxColorValue=255)) #buckthon control
 
+pt.cols3 <- c(rgb(0,114,178,maxColorValue=255), #control ash
+              rgb(213,94,0,maxColorValue=255), #removal ash
+              rgb(0,158,115,maxColorValue=255)) #buckthon control
+
+pt.cols4 <- c(rgb(0,114,178,190,maxColorValue=255), #control ash
+              rgb(213,94,0,190,maxColorValue=255), #removal ash
+              rgb(0,158,115,190,maxColorValue=255)) #buckthon control
+
 wd <- 16*2.54
 hd <- 4*2.54
 
@@ -94,6 +102,8 @@ llc <- 2.5
 lg.c <- 2
 #axis size
 ax.c <- 2
+#text size
+tcx <- 2.5
 
 
 
@@ -184,8 +194,8 @@ mean(buckthorn.L.m2.day$mean)*sum(buckthornRemovals$LAft.M2)
 range(buckthornRemovals$LAft.M2)
 
 
-png(paste0(outDir,"/leaf_area.png"), width = 10, height = 5, units = "in", res=300)
-par(mai=c(1.5,3,0.5,0.5))
+png(paste0(outDir,"/leaf_area.png"), width = 8, height = 5, units = "in", res=300)
+par(mai=c(1.5,1.5,0.5,0.5))
 
 plot(c(0,0), c(0,0), ylim=c(0,10),
      xlim=c(0,241),
@@ -216,7 +226,7 @@ dev.off()
 
 NDVIdoy <- unique(ndviAll$doy)
 cntlseq <- seq(1,length(NDVIdoy))*6
-rmlseq <- cntlseq-2
+rmlseq <- cntlseq-2.5
 
 #set up histogram values
 
@@ -229,7 +239,7 @@ for(i in 1:length(NDVIdoy)){
   ctrNDVI[[i]] <- hist(ndviAll$ndvi[ndviAll$exp == "control" & ndviAll$doy == NDVIdoy[i]],
                   breaks=seq(0,1,by=0.01))
   
-  ctrNDVI[[i]]$densityScale <-ctrNDVI[[i]]$density*(0.5/ max(ctrNDVI[[i]]$density))
+  ctrNDVI[[i]]$densityScale <-ctrNDVI[[i]]$density*(1/ max(ctrNDVI[[i]]$density))
   
   minCN[i] <- round(min(ndviAll$ndvi[ndviAll$exp == "control" & ndviAll$doy == NDVIdoy[i]],na.rm=TRUE)*100,1)/100
   maxCN[i] <- round(max(ndviAll$ndvi[ndviAll$exp == "control" & ndviAll$doy == NDVIdoy[i]],na.rm=TRUE)*100,1)/100
@@ -246,7 +256,7 @@ for(i in 1:length(NDVIdoy)){
   rmlNDVI[[i]] <- hist(ndviAll$ndvi[ndviAll$exp == "remove" & ndviAll$doy == NDVIdoy[i]],
                        breaks=seq(0,1,by=0.01))
   
-  rmlNDVI[[i]]$densityScale <-rmlNDVI[[i]]$density*(0.5/ max(rmlNDVI[[i]]$density))
+  rmlNDVI[[i]]$densityScale <-rmlNDVI[[i]]$density*(1/ max(rmlNDVI[[i]]$density))
   
   minRN[i] <- round(min(ndviAll$ndvi[ndviAll$exp == "remove" & ndviAll$doy == NDVIdoy[i]],na.rm=TRUE)*100,1)/100
   maxRN[i] <- round(max(ndviAll$ndvi[ndviAll$exp == "remove" & ndviAll$doy == NDVIdoy[i]],na.rm=TRUE)*100,1)/100
@@ -254,14 +264,20 @@ for(i in 1:length(NDVIdoy)){
                            probs=c(0.025,0.25,0.50,0.75,0.975),na.rm=TRUE)
 }
 
-width.box <- 0.2
+width.box <- 0.5
 
-png(paste0(outDir,"/NDVI.png"), width = 20, height = 5, units = "in", res=300)
-par(mai=c(1.5,3,0.5,0.5))
+png(paste0(outDir,"/NDVI.png"), width = 12, height = 5, units = "in", res=300)
+par(mai=c(1.5,1.5,0.5,0.5))
 
 plot(c(0,1),c(0,1), xlim=c(0,70), ylim=c(0,1), 
      axes=FALSE, type="n", xlab = " ", ylab= " ",
      xaxs="i", yaxs="i")
+
+polygon(c(39.5-1.75,39.5-1.75,70,70),
+        c(0,1,1,0),
+        border=NA, col=rgb(0.95,0.95,0.95))
+text(47,0.15, "Post-removal", cex=tcx)
+
 for(i in 1:length(NDVIdoy)){
   
   
@@ -271,15 +287,15 @@ for(i in 1:length(NDVIdoy)){
             rev(cntlseq[i]+ctrNDVI[[i]]$densityScale[ctrNDVI[[i]]$mids<=maxCN[i] & ctrNDVI[[i]]$mids >= minCN[i]])),
           c(ctrNDVI[[i]]$mids[ctrNDVI[[i]]$mids<=maxCN[i] & ctrNDVI[[i]]$mids >= minCN[i]],
             rev(ctrNDVI[[i]]$mids[ctrNDVI[[i]]$mids<=maxCN[i] & ctrNDVI[[i]]$mids >= minCN[i]])), 
-          lwd=0.75,  col=pt.cols2[1], border=pt.cols[1])
+          lwd=1.5,  col=pt.cols2[1], border=pt.cols3[1])
   
   arrows(	cntlseq[i],ctrQuant[[i]][1], cntlseq[i], ctrQuant[[i]][5], code=0, lwd=1)
   
   polygon(c(cntlseq[i]-width.box,cntlseq[i]-width.box,cntlseq[i]+width.box,cntlseq[i]+width.box),
           c(ctrQuant[[i]][2],ctrQuant[[i]][4],ctrQuant[[i]][4],ctrQuant[[i]][2]),
-          border=NA, col=rgb(0.25,0.25,0.25,0.5))
+          border=NA, col=pt.cols4[1])
   
-  arrows( cntlseq[i]-width.box,ctrQuant[[i]][3], cntlseq[i]+width.box,ctrQuant[[i]][3],code=0, lwd=4, col=pt.cols[1])	
+  arrows( cntlseq[i]-width.box,ctrQuant[[i]][3], cntlseq[i]+width.box,ctrQuant[[i]][3],code=0, lwd=2,col=pt.cols3[1])	
   
   
   
@@ -287,26 +303,38 @@ for(i in 1:length(NDVIdoy)){
             rev(rmlseq[i]+rmlNDVI[[i]]$densityScale[rmlNDVI[[i]]$mids<=maxRN[i] & rmlNDVI[[i]]$mids >= minRN[i]])),
           c(rmlNDVI[[i]]$mids[rmlNDVI[[i]]$mids<=maxRN[i] & rmlNDVI[[i]]$mids >= minRN[i]],
             rev(rmlNDVI[[i]]$mids[rmlNDVI[[i]]$mids<=maxRN[i] & rmlNDVI[[i]]$mids >= minRN[i]])), 
-          lwd=0.75,  col= pt.cols2[2],border= pt.cols[2])
+          lwd=1.5,  col= pt.cols2[2],border= pt.cols3[2])
   
   arrows(	rmlseq[i],rmQuant[[i]][1], rmlseq[i], rmQuant[[i]][5], code=0, lwd=1)
   
   polygon(c(rmlseq[i]-width.box,rmlseq[i]-width.box,rmlseq[i]+width.box,rmlseq[i]+width.box),
           c(rmQuant[[i]][2],rmQuant[[i]][4],rmQuant[[i]][4],rmQuant[[i]][2]),
-          border=NA, col=rgb(0.25,0.25,0.25,0.5))
+          border=NA, col=pt.cols4[2])
   
-  arrows( rmlseq[i]-width.box,rmQuant[[i]][3], rmlseq[i]+width.box,rmQuant[[i]][3],code=0, lwd=4, col=pt.cols[2])	
+  arrows( rmlseq[i]-width.box,rmQuant[[i]][3], rmlseq[i]+width.box,rmQuant[[i]][3],code=0, lwd=3, col=pt.cols3[2])	
+}
   
   
- 
-}	
+  axis(1, rmlseq+1.25, rep(" ", length(rmlseq+1.25)), cex.axis=ax.c, lwd.ticks=tlw)
+  axis(2, seq(0,1, by=0.2), rep(" ", length(seq(0,1, by=0.2))), las=2, cex.axis=ax.c, lwd.ticks=tlw)
+  mtext( NDVIdoy, at= rmlseq+1.25, side=1, line=2, cex=alc)
+  mtext( seq(0,1, by=0.2), at= seq(0,1, by=0.2), side=2, line=2, cex=alc, las=2)
+  mtext(expression(paste("NDVI (-)")), side=2, line=5, cex=llc)
+  mtext("Day of year", side=1, line=5, cex=llc)
+  
+  legend("bottomright",
+         c("control",
+           "removal"),
+        fill=pt.cols2,
+        border=pt.cols3,
+         cex=lg.c, bty="n",  
+         bg=rgb(0.95,0.95,0.95))
+  
+
 
 dev.off()
 
-library(ggplot2)
 
-ggplot(data=ndviAll, aes(x=as.factor(doy),y=ndvi, fill=exp))+
-  geom_violin()
 
 ##############################
 #### soil moisture       ----
