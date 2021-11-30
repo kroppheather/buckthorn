@@ -88,6 +88,8 @@ alc <- 2.5
 llc <- 2.5
 #legend size
 lg.c <- 2
+#axis size
+ax.c <- 2
 
 
 
@@ -167,24 +169,40 @@ dev.off()
 
 buckthornRemovals <- buckthornRemoval[buckthornRemoval$DBH..cm. < 60,]
 
-hist(buckthornRemovals$LAft.M2, breaks=seq(0,240,by=20))
+histL <- hist(buckthornRemovals$LAft.M2, breaks=seq(0,240,by=3))
+sum(buckthornRemovals$LAft.M2)
 
 #exclude LA from large tree because unsure
 
 
 mean(buckthorn.L.m2.day$mean)*sum(buckthornRemovals$LAft.M2)
 
-
-test <- inner_join(controlT, removalT, by="estD")
-
-tempD <- test$Tm6.x - test$Tm6.y
-t.test(tempD, mu=0)
-#negative difference = removal is warmer than control
-moistD <- test$SM.cor.x - test$SM.cor.y
-t.test(moistD, mu=0)
-#positive difference = removal has less moisture than control
+range(buckthornRemovals$LAft.M2)
 
 
+png(paste0(outDir,"/leaf_area.png"), width = 10, height = 5, units = "in", res=300)
+par(mai=c(1.5,3,0.5,0.5))
+
+plot(c(0,0), c(0,0), ylim=c(0,10),
+     xlim=c(0,241),
+     axes=FALSE, xlab=" ",type="n",
+     ylab= " ", xaxs = "i", yaxs="i")
+for(i in 1:length(histL$mids)){
+  polygon(c(histL$mids[i]-1.5,histL$mids[i]-1.5,histL$mids[i]+1.5,histL$mids[i]+1.5),
+          c(0,histL$counts[i],histL$counts[i],0),
+          col=pt.cols[3],
+          border="white")
+  
+}
+
+axis(1, seq(0,240, by=40), rep(" ", length(seq(0,240, by=40))), cex.axis=ax.c, lwd.ticks=tlw)
+axis(2, seq(0,10, by=2), rep(" ", length(seq(0,10, by=2))), las=2, cex.axis=ax.c, lwd.ticks=tlw)
+mtext( seq(0,240, by=40), at= seq(0,240, by=40), side=1, line=2, cex=alc)
+mtext( seq(0,10, by=2), at= seq(0,10, by=2), side=2, line=2, cex=alc, las=2)
+mtext(expression(paste("Buckthorn canopy leaf area removed ")), side=1, line=4.5, cex=llc)
+mtext(expression(paste("(m"^"2",")")), side=1, line=7, cex=llc)
+mtext("Frequency", side=2, line=4.5, cex=llc)
+dev.off()
 
 ##############################
 #### soil moisture       ----
@@ -282,6 +300,17 @@ dev.off()
 
 
 
+
+##############################
+#### soil stats ----- 
+test <- inner_join(controlT, removalT, by="estD")
+
+tempD <- test$Tm6.x - test$Tm6.y
+t.test(tempD, mu=0)
+#negative difference = removal is warmer than control
+moistD <- test$SM.cor.x - test$SM.cor.y
+t.test(moistD, mu=0)
+#positive difference = removal has less moisture than control
 
 
 
