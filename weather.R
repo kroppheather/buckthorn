@@ -24,12 +24,12 @@ TomstD2 <- "09_04_2021"
 
 # File path for meter data
 DirMeter <- c("c:/Google Drive/research/projects/Data/campus_weather/METER/CSV/12_z6-10463 12Oct21.csv",
-              "E:/Google Drive/research/projects/Data/campus_weather/METER/CSV/12_z6-10463 12Oct21.csv")
+              "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/Data/campus_weather/METER/CSV/12_z6-10463 12Oct21.csv")
 
 
 
 DirTOMST <- c(paste0("c:/Google Drive/research/projects/Data/campus_weather/TOMST"),
-              paste0("E:/Google Drive/research/projects/Data/campus_weather/TOMST")) 
+              paste0("/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/Data/campus_weather/TOMST")) 
 
 # Select user - change if needed
 user <- 2
