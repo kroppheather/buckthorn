@@ -82,6 +82,10 @@ pt.cols4 <- c(rgb(0,114,178,190,maxColorValue=255), #control ash
               rgb(213,94,0,190,maxColorValue=255), #removal ash
               rgb(0,158,115,190,maxColorValue=255)) #buckthon control
 
+pt.cols5 <- c(rgb(0,114,178,maxColorValue=255), #control ash
+              rgb(213,94,0,maxColorValue=255), #removal ash
+              rgb(0,158,115,maxColorValue=255)) #buckthon control
+
 wd <- 16*2.54
 hd <- 4*2.54
 
@@ -272,28 +276,34 @@ dev.off()
 ##############################
 #### soil temperature       ----
 
+TMSp1 <- TMSsub %>% 
+  filter(location == "control" & estD <= "2021-07-16 11:15:00")
+
 png(paste0(outDir,"/soil_temperature.png"), width = 20, height = 7, units = "in", res=300)
 par(mai=c(1.5,3,0.5,0.5))
 plot(c(0,0), c(0,0), ylim=c(15,25),
      xlim=c(190,250),
      axes=FALSE, xlab=" ",
      ylab= " ", xaxs = "i", yaxs="i")
-TMSp1 <- TMSsub %>% 
-  filter(location == "control" & estD <= "2021-07-16 11:15:00")
+
+lines(TMSsub$DD[TMSsub$location == "control" & TMSsub$estD <= "2021-07-16 11:15:00"],
+       TMSsub$Tm6[TMSsub$location == "control"& TMSsub$estD <= "2021-07-16 11:15:00"],
+       pch=19, col=pt.cols5[1],
+       type="l", lwd=lln.w)
 
 lines(TMSsub$DD[TMSsub$location == "control" & TMSsub$estD >= "2021-08-03 10:15:00"],
        TMSsub$Tm6[TMSsub$location == "control"& TMSsub$estD >= "2021-08-03 10:15:00"],
-        col=pt.cols[1],
+        col=pt.cols5[1],
        type="l", lwd=lln.w)
 
 lines(TMSsub$DD[TMSsub$location == "removal"& TMSsub$estD <= "2021-07-16 11:15:00"],
        TMSsub$Tm6[TMSsub$location == "removal"& TMSsub$estD <= "2021-07-16 11:15:00"],
-       col=pt.cols[2],
+       col=pt.cols5[2],
        type="l", lwd=lln.w)
 
 lines(TMSsub$DD[TMSsub$location == "removal" & TMSsub$estD >= "2021-08-03 10:15:00"],
        TMSsub$Tm6[TMSsub$location == "removal"& TMSsub$estD >= "2021-08-03 10:15:00"],
-        col=pt.cols[2],
+        col=pt.cols5[2],
        type="l", lwd=lln.w)
 
 legend("topright",
