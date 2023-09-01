@@ -86,6 +86,10 @@ pt.cols5 <- c(rgb(0,114,178,maxColorValue=255), #control ash
               rgb(213,94,0,maxColorValue=255), #removal ash
               rgb(0,158,115,maxColorValue=255)) #buckthon control
 
+pt.cols6 <- c(rgb(0,114,178,220,maxColorValue=255), #control ash
+              rgb(213,94,0,220,maxColorValue=255), #removal ash
+              rgb(0,158,115,220,maxColorValue=255)) #buckthon control
+
 wd <- 16*2.54
 hd <- 4*2.54
 
@@ -239,28 +243,28 @@ plot(c(0,0), c(0,0), ylim=c(0.3,0.6),
 
 points(TMSsub$DD[TMSsub$location == "control" & TMSsub$estD <= "2021-07-16 11:15:00"],
        TMSsub$SM.cor[TMSsub$location == "control"& TMSsub$estD <= "2021-07-16 11:15:00"],
-       pch=19, col=pt.cols[1],
+       pch=19, col=pt.cols6[1],
        type="l", lwd=lln.w)
 
 points(TMSsub$DD[TMSsub$location == "control" & TMSsub$estD >= "2021-08-03 10:15:00"],
        TMSsub$SM.cor[TMSsub$location == "control"& TMSsub$estD >= "2021-08-03 10:15:00"],
-       pch=19, col=pt.cols[1],
+       pch=19, col=pt.cols6[1],
        type="l", lwd=lln.w)
 
 points(TMSsub$DD[TMSsub$location == "removal"& TMSsub$estD <= "2021-07-16 11:15:00"],
        TMSsub$SM.cor[TMSsub$location == "removal"& TMSsub$estD <= "2021-07-16 11:15:00"],
-       pch=19, col=pt.cols[2],
+       pch=19, col=pt.cols6[2],
        type="l", lwd=lln.w)
 
 points(TMSsub$DD[TMSsub$location == "removal" & TMSsub$estD >= "2021-08-03 10:15:00"],
        TMSsub$SM.cor[TMSsub$location == "removal"& TMSsub$estD >= "2021-08-03 10:15:00"],
-       pch=19, col=pt.cols[2],
+       pch=19, col=pt.cols6[2],
        type="l", lwd=lln.w)
 
 legend("topright",
        c("Control",
          "Removal"),
-       col=pt.cols[1:2],
+       col=pt.cols6[1:2],
         lwd=ln.w,
        cex=lg.c, pt.cex=pt.c, bty="n", horiz=TRUE)
 axis(1, seq(190,270, by=10), rep(" ", length(seq(190,270, by=10))), cex.axis=ax.c, lwd.ticks=tlw)
@@ -288,28 +292,28 @@ plot(c(0,0), c(0,0), ylim=c(15,25),
 
 lines(TMSsub$DD[TMSsub$location == "control" & TMSsub$estD <= "2021-07-16 11:15:00"],
        TMSsub$Tm6[TMSsub$location == "control"& TMSsub$estD <= "2021-07-16 11:15:00"],
-       pch=19, col=pt.cols5[1],
+       pch=19, col=pt.cols6[1],
        type="l", lwd=lln.w)
 
 lines(TMSsub$DD[TMSsub$location == "control" & TMSsub$estD >= "2021-08-03 10:15:00"],
        TMSsub$Tm6[TMSsub$location == "control"& TMSsub$estD >= "2021-08-03 10:15:00"],
-        col=pt.cols5[1],
+        col=pt.cols6[1],
        type="l", lwd=lln.w)
 
 lines(TMSsub$DD[TMSsub$location == "removal"& TMSsub$estD <= "2021-07-16 11:15:00"],
        TMSsub$Tm6[TMSsub$location == "removal"& TMSsub$estD <= "2021-07-16 11:15:00"],
-       col=pt.cols5[2],
+       col=pt.cols6[2],
        type="l", lwd=lln.w)
 
 lines(TMSsub$DD[TMSsub$location == "removal" & TMSsub$estD >= "2021-08-03 10:15:00"],
        TMSsub$Tm6[TMSsub$location == "removal"& TMSsub$estD >= "2021-08-03 10:15:00"],
-        col=pt.cols5[2],
+        col=pt.cols6[2],
        type="l", lwd=lln.w)
 
 legend("topright",
        c("Control",
          "Removal"),
-       col=pt.cols[1:2],
+       col=pt.cols6[1:2],
        lwd=ln.w,
        cex=lg.c, pt.cex=pt.c, bty="n", horiz=TRUE)
 axis(1, seq(190,270, by=10), rep(" ", length(seq(190,270, by=10))), cex.axis=ax.c, lwd.ticks=tlw)
