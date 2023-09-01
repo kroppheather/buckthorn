@@ -201,7 +201,8 @@ TMSbind$year <- year(TMSbind$estD)
 TMSbind$doy <-  yday(TMSbind$estD)
 TMSbind$DD <- yday(TMSbind$estD) + ((hour(TMSbind$estD)+(minute(TMSbind$estD)/60))/24)
 
-TMSsub <- TMSbind[TMSbind$doy >= 191 & TMSbind$year == 2021,]
+TMSsub <- TMSbind %>%
+  filter(TMSbind$doy >= 191 & TMSbind$year == 2021)
 
 rm(TMS2p1)
 rm(TMS1p2) 

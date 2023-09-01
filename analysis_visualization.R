@@ -53,7 +53,7 @@
 
 source("/Users/hkropp/Documents/GitHub/buckthorn/sapflux.r")
 source("/Users/hkropp/Documents/GitHub/buckthorn/weather.r")
-#source("/Users/hkropp/Documents/GitHub/buckthorn/spatial_process.r")
+source("/Users/hkropp/Documents/GitHub/buckthorn/stand.r")
 ##############################
 #### output directory ### ----
 
@@ -204,7 +204,7 @@ plot(c(0,0), c(0,0), ylim=c(0,10),
 for(i in 1:length(histL$mids)){
   polygon(c(histL$mids[i]-1.5,histL$mids[i]-1.5,histL$mids[i]+1.5,histL$mids[i]+1.5),
           c(0,histL$counts[i],histL$counts[i],0),
-          col=pt.cols[3],
+          col="grey50",
           border="white")
   
 }
@@ -219,121 +219,6 @@ mtext("Frequency", side=2, line=4.5, cex=llc)
 dev.off()
 
 
-##############################
-#### NDVI violin  ----
-
-#get all unique doy
-
-NDVIdoy <- unique(ndviAll$doy)
-cntlseq <- seq(1,length(NDVIdoy))*6
-rmlseq <- cntlseq-2.5
-
-#set up histogram values
-
-ctrNDVI <- list()
-minCN <- numeric()
-maxCN <- numeric()
-ctrQuant <- list()
-
-for(i in 1:length(NDVIdoy)){
-  ctrNDVI[[i]] <- hist(ndviAll$ndvi[ndviAll$exp == "control" & ndviAll$doy == NDVIdoy[i]],
-                  breaks=seq(0,1,by=0.01))
-  
-  ctrNDVI[[i]]$densityScale <-ctrNDVI[[i]]$density*(1/ max(ctrNDVI[[i]]$density))
-  
-  minCN[i] <- round(min(ndviAll$ndvi[ndviAll$exp == "control" & ndviAll$doy == NDVIdoy[i]],na.rm=TRUE)*100,1)/100
-  maxCN[i] <- round(max(ndviAll$ndvi[ndviAll$exp == "control" & ndviAll$doy == NDVIdoy[i]],na.rm=TRUE)*100,1)/100
-  ctrQuant[[i]] <- quantile(ndviAll$ndvi[ndviAll$exp == "control" & ndviAll$doy == NDVIdoy[i]],
-                            probs=c(0.025,0.25,0.50,0.75,0.975),na.rm=TRUE)
-}
-
-rmlNDVI <- list()
-minRN <- numeric()
-maxRN <- numeric()
-rmQuant <- list()
-
-for(i in 1:length(NDVIdoy)){
-  rmlNDVI[[i]] <- hist(ndviAll$ndvi[ndviAll$exp == "remove" & ndviAll$doy == NDVIdoy[i]],
-                       breaks=seq(0,1,by=0.01))
-  
-  rmlNDVI[[i]]$densityScale <-rmlNDVI[[i]]$density*(1/ max(rmlNDVI[[i]]$density))
-  
-  minRN[i] <- round(min(ndviAll$ndvi[ndviAll$exp == "remove" & ndviAll$doy == NDVIdoy[i]],na.rm=TRUE)*100,1)/100
-  maxRN[i] <- round(max(ndviAll$ndvi[ndviAll$exp == "remove" & ndviAll$doy == NDVIdoy[i]],na.rm=TRUE)*100,1)/100
-  rmQuant[[i]] <- quantile(ndviAll$ndvi[ndviAll$exp == "remove" & ndviAll$doy == NDVIdoy[i]],
-                           probs=c(0.025,0.25,0.50,0.75,0.975),na.rm=TRUE)
-}
-
-width.box <- 0.5
-
-png(paste0(outDir,"/NDVI.png"), width = 12, height = 7, units = "in", res=300)
-par(mai=c(1.5,1.5,0.5,0.5))
-
-plot(c(0,1),c(0,1), xlim=c(0,70), ylim=c(0,1), 
-     axes=FALSE, type="n", xlab = " ", ylab= " ",
-     xaxs="i", yaxs="i")
-
-polygon(c(39.5-1.75,39.5-1.75,70,70),
-        c(0,1,1,0),
-        border=NA, col=rgb(0.95,0.95,0.95))
-text(47,0.15, "Post-removal", cex=tcx)
-
-for(i in 1:length(NDVIdoy)){
-  
-  
-  #control
-  
-  polygon(c(cntlseq[i]+(0-ctrNDVI[[i]]$densityScale[ctrNDVI[[i]]$mids<=maxCN[i] & ctrNDVI[[i]]$mids >= minCN[i]]), 
-            rev(cntlseq[i]+ctrNDVI[[i]]$densityScale[ctrNDVI[[i]]$mids<=maxCN[i] & ctrNDVI[[i]]$mids >= minCN[i]])),
-          c(ctrNDVI[[i]]$mids[ctrNDVI[[i]]$mids<=maxCN[i] & ctrNDVI[[i]]$mids >= minCN[i]],
-            rev(ctrNDVI[[i]]$mids[ctrNDVI[[i]]$mids<=maxCN[i] & ctrNDVI[[i]]$mids >= minCN[i]])), 
-          lwd=1.5,  col=pt.cols2[1], border=pt.cols3[1])
-  
-  arrows(	cntlseq[i],ctrQuant[[i]][1], cntlseq[i], ctrQuant[[i]][5], code=0, lwd=1)
-  
-  polygon(c(cntlseq[i]-width.box,cntlseq[i]-width.box,cntlseq[i]+width.box,cntlseq[i]+width.box),
-          c(ctrQuant[[i]][2],ctrQuant[[i]][4],ctrQuant[[i]][4],ctrQuant[[i]][2]),
-          border=NA, col=pt.cols4[1])
-  
-  arrows( cntlseq[i]-width.box,ctrQuant[[i]][3], cntlseq[i]+width.box,ctrQuant[[i]][3],code=0, lwd=2,col=pt.cols3[1])	
-  
-  
-  
-  polygon(c(rmlseq[i]+(0-rmlNDVI[[i]]$densityScale[rmlNDVI[[i]]$mids<=maxRN[i] & rmlNDVI[[i]]$mids >= minRN[i]]), 
-            rev(rmlseq[i]+rmlNDVI[[i]]$densityScale[rmlNDVI[[i]]$mids<=maxRN[i] & rmlNDVI[[i]]$mids >= minRN[i]])),
-          c(rmlNDVI[[i]]$mids[rmlNDVI[[i]]$mids<=maxRN[i] & rmlNDVI[[i]]$mids >= minRN[i]],
-            rev(rmlNDVI[[i]]$mids[rmlNDVI[[i]]$mids<=maxRN[i] & rmlNDVI[[i]]$mids >= minRN[i]])), 
-          lwd=1.5,  col= pt.cols2[2],border= pt.cols3[2])
-  
-  arrows(	rmlseq[i],rmQuant[[i]][1], rmlseq[i], rmQuant[[i]][5], code=0, lwd=1)
-  
-  polygon(c(rmlseq[i]-width.box,rmlseq[i]-width.box,rmlseq[i]+width.box,rmlseq[i]+width.box),
-          c(rmQuant[[i]][2],rmQuant[[i]][4],rmQuant[[i]][4],rmQuant[[i]][2]),
-          border=NA, col=pt.cols4[2])
-  
-  arrows( rmlseq[i]-width.box,rmQuant[[i]][3], rmlseq[i]+width.box,rmQuant[[i]][3],code=0, lwd=3, col=pt.cols3[2])	
-}
-  
-  
-  axis(1, rmlseq+1.25, rep(" ", length(rmlseq+1.25)), cex.axis=ax.c, lwd.ticks=tlw)
-  axis(2, seq(0,1, by=0.2), rep(" ", length(seq(0,1, by=0.2))), las=2, cex.axis=ax.c, lwd.ticks=tlw)
-  mtext( NDVIdoy, at= rmlseq+1.25, side=1, line=2, cex=alc)
-  mtext( seq(0,1, by=0.2), at= seq(0,1, by=0.2), side=2, line=2, cex=alc, las=2)
-  mtext(expression(paste("NDVI (-)")), side=2, line=5, cex=llc)
-  mtext("Day of year", side=1, line=5, cex=llc)
-  
-  legend("bottomright",
-         c("control",
-           "removal"),
-        fill=pt.cols2,
-        border=pt.cols3,
-         cex=lg.c, bty="n",  
-         bg=rgb(0.95,0.95,0.95))
-  
-
-
-dev.off()
-
 
 
 ##############################
@@ -344,7 +229,7 @@ dev.off()
 png(paste0(outDir,"/soil_moist.png"), width = 20, height = 7, units = "in", res=300)
 par(mai=c(1.5,3,0.5,0.5))
 plot(c(0,0), c(0,0), ylim=c(0.3,0.6),
-     xlim=c(190,270),
+     xlim=c(190,250),
      axes=FALSE, xlab=" ",
      ylab= " ", xaxs = "i", yaxs="i")
 
@@ -390,28 +275,25 @@ dev.off()
 png(paste0(outDir,"/soil_temperature.png"), width = 20, height = 7, units = "in", res=300)
 par(mai=c(1.5,3,0.5,0.5))
 plot(c(0,0), c(0,0), ylim=c(15,25),
-     xlim=c(190,270),
+     xlim=c(190,250),
      axes=FALSE, xlab=" ",
      ylab= " ", xaxs = "i", yaxs="i")
+TMSp1 <- TMSsub %>% 
+  filter(location == "control" & estD <= "2021-07-16 11:15:00")
 
-points(TMSsub$DD[TMSsub$location == "control" & TMSsub$estD <= "2021-07-16 11:15:00"],
-       TMSsub$Tm6[TMSsub$location == "control"& TMSsub$estD <= "2021-07-16 11:15:00"],
-       pch=19, col=pt.cols[1],
-       type="l", lwd=lln.w)
-
-points(TMSsub$DD[TMSsub$location == "control" & TMSsub$estD >= "2021-08-03 10:15:00"],
+lines(TMSsub$DD[TMSsub$location == "control" & TMSsub$estD >= "2021-08-03 10:15:00"],
        TMSsub$Tm6[TMSsub$location == "control"& TMSsub$estD >= "2021-08-03 10:15:00"],
-       pch=19, col=pt.cols[1],
+        col=pt.cols[1],
        type="l", lwd=lln.w)
 
-points(TMSsub$DD[TMSsub$location == "removal"& TMSsub$estD <= "2021-07-16 11:15:00"],
+lines(TMSsub$DD[TMSsub$location == "removal"& TMSsub$estD <= "2021-07-16 11:15:00"],
        TMSsub$Tm6[TMSsub$location == "removal"& TMSsub$estD <= "2021-07-16 11:15:00"],
-       pch=19, col=pt.cols[2],
+       col=pt.cols[2],
        type="l", lwd=lln.w)
 
-points(TMSsub$DD[TMSsub$location == "removal" & TMSsub$estD >= "2021-08-03 10:15:00"],
+lines(TMSsub$DD[TMSsub$location == "removal" & TMSsub$estD >= "2021-08-03 10:15:00"],
        TMSsub$Tm6[TMSsub$location == "removal"& TMSsub$estD >= "2021-08-03 10:15:00"],
-       pch=19, col=pt.cols[2],
+        col=pt.cols[2],
        type="l", lwd=lln.w)
 
 legend("topright",
