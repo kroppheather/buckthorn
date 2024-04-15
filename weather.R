@@ -36,7 +36,7 @@ DirTOMST <- c(
 
 
 # Select user - change if needed
-user <- 2
+user <- 1
 
 ############################
 ########## Meter -----------
