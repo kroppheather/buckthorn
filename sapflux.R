@@ -46,9 +46,10 @@ library(dplyr)
 userNumber <- 1
 #sapflow and sensor data parent directory
 dirData <- c("G:/My Drive/research/projects/campus/buckthorn/sapflux",#windows office
-             "/Users/hkropp/Google Drive/research/projects/campus/buckthorn/sapflux") # teaching mac
+             "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/campus/buckthorn/sapflux") # teaching mac
 dirWeather <- c("G:/My Drive/research/projects/Data/campus_weather/METER/",
-                "/Users/hkropp/Google Drive/research/projects/Data/campus_weather/METER/")
+                "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/Data/campus_weather/METER/")
+
 #sapflow download date for file
 sversion <- "09_24_2021"
 

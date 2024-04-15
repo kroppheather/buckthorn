@@ -23,13 +23,17 @@ TomstD <- "07_28_2021"
 TomstD2 <- "09_04_2021"
 
 # File path for meter data
-DirMeter <- c("c:/Google Drive/research/projects/Data/campus_weather/METER/CSV/12_z6-10463 12Oct21.csv",
-              "G:/My Drive/research/projects/Data/campus_weather/METER/CSV/12_z6-10463 12Oct21.csv")
+DirMeter <- c(
+              "G:/My Drive/research/projects/Data/campus_weather/METER/CSV/12_z6-10463 12Oct21.csv",
+              "/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/Data/campus_weather/METER/CSV/12_z6-10463 12Oct21.csv")
 
 
 
-DirTOMST <- c(paste0("c:/Google Drive/research/projects/Data/campus_weather/TOMST"),
-              paste0("G:/My Drive/research/projects/Data/campus_weather/TOMST")) 
+
+DirTOMST <- c(
+              paste0("G:/My Drive/research/projects/Data/campus_weather/TOMST"), 
+              paste0("/Users/hkropp/Library/CloudStorage/GoogleDrive-hkropp@hamilton.edu/My Drive/research/projects/Data/campus_weather/TOMST")) 
+
 
 # Select user - change if needed
 user <- 2
@@ -201,7 +205,8 @@ TMSbind$year <- year(TMSbind$estD)
 TMSbind$doy <-  yday(TMSbind$estD)
 TMSbind$DD <- yday(TMSbind$estD) + ((hour(TMSbind$estD)+(minute(TMSbind$estD)/60))/24)
 
-TMSsub <- TMSbind[TMSbind$doy >= 191 & TMSbind$year == 2021,]
+TMSsub <- TMSbind %>%
+  filter(TMSbind$doy >= 191 & TMSbind$year == 2021)
 
 rm(TMS2p1)
 rm(TMS1p2) 
