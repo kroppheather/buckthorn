@@ -229,8 +229,8 @@ maxnight <- maxnight1  %>%
   group_by(sensor, doy5) %>%
   filter(hour == min(hour),na.rm=TRUE)
 
-#ggplot(maxnight, aes(doy5,dT, color=sensor))+
-#  geom_point()
+ggplot(maxnight, aes(doy5,dT, color=sensor))+
+  geom_point()
 
 # isolate max and join back into table
 maxJoin <- data.frame(sensor=maxnight$sensor, 
@@ -423,6 +423,10 @@ buckthorn.tree$Flow.m3.s <- buckthorn.tree$velo * buckthorn.tree$sap.aream2
 #convert to L per secton
 
 ash.tree$Flow.L.s <- ash.tree$Flow.m3.s * 1000
+
+ggplot(ash.tree, aes(DD, Flow.L.s, color=sensor))+
+  geom_point()+
+  geom_line()
 
 buckthorn.tree$Flow.L.s <- buckthorn.tree$Flow.m3.s * 1000
 
