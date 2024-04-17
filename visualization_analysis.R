@@ -112,6 +112,23 @@ ax.c <- 2
 tcx <- 2.5
 
 
+##############################
+#### weather ----
+hd <- 5
+wd <- 10
+
+
+png(paste0(outDir,"/metero.png"), width = 20, height = 7, units = "in", res=300)
+layout(matrix(c(1,2,3), ncol=1), width=lcm(rep(wd*2.54,1)),
+       height=lcm(rep(c(hd1)*2.54,3)))
+
+par(mai=c(0,0,0,0))
+
+par(mai=c(0,0,0,0))
+
+par(mai=c(0,0,0,0))
+
+dev.off()
 
 ##############################
 #### daily T per unit leaf ----

@@ -213,3 +213,15 @@ rm(TMS1p2)
 rm(TMS2p2)
 rm(TMS3p1)
 rm(TMS3p2)
+
+summerM <-  meterTable %>%
+  filter(doy >= 191 & year == 2021 & doy <= 270) 
+# only a few days with a 15 min period of NA due to station maintaince
+meteoDaily <- meterTable %>%
+  filter(doy >= 191 & year == 2021 & doy <= 270) %>%
+  group_by(doy)%>%
+  summarise(airT = mean(AirTemp, na.rm=TRUE),
+            TotPrecip_cm = sum(Precip , na.rm=TRUE)/10,
+            aveVPD = mean(VPD , na.rm=TRUE), 
+            maxVPD = max(VPD, na.rm=TRUE))
+
