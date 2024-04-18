@@ -92,9 +92,9 @@ wd <- 16*2.54
 hd <- 4*2.54
 
 #point cex
-pt.c <- 4
+pt.c <- 3
 #line thickness
-ln.w <- 3
+ln.w <- 2
 
 #line thickness for line only
 lln.w <- 4
@@ -110,6 +110,8 @@ lg.c <- 2
 ax.c <- 2
 #text size
 tcx <- 2.5
+#panel letter label size
+plc <- 4
 
 
 ##############################
@@ -118,15 +120,77 @@ hd <- 5
 wd <- 10
 
 
-png(paste0(outDir,"/metero.png"), width = 20, height = 7, units = "in", res=300)
+png(paste0(outDir,"/metero.png"), width = 15, height = 20, units = "in", res=300)
 layout(matrix(c(1,2,3), ncol=1), width=lcm(rep(wd*2.54,1)),
-       height=lcm(rep(c(hd1)*2.54,3)))
+       height=lcm(rep(c(hd)*2.54,3)))
 
-par(mai=c(0,0,0,0))
+par(mai=c(0.3,0.3,0.3,0.3))
 
-par(mai=c(0,0,0,0))
+plot(c(0,0), c(0,0), ylim=c(10,26),
+     xlim=c(190,270),
+     axes=FALSE, xlab=" ",
+     ylab= " ", xaxs = "i", yaxs="i")
+points(meteoDaily$doy,meteoDaily$airT,
+       pch=19, col="black",
+       type="b", cex=pt.c, lwd=ln.w)
 
-par(mai=c(0,0,0,0))
+axis(1, seq(190,270, by=10), rep(" ", length(seq(190,270, by=10))), cex.axis=ax.c, lwd.ticks=tlw)
+axis(2, seq(10,25, by=5), rep(" ", length(seq(10,25, by=5))), las=2, cex.axis=ax.c, lwd.ticks=tlw)
+mtext( seq(10,25, by=5), at= seq(10,25, by=5), side=2, line=3, cex=alc, las=2)
+mtext("Air temperature", side=2, line=13, cex=llc)
+mtext(expression(paste("(", degree,"C )")), side=2, line=9, cex=llc)
+text(192, 25, "a", cex=plc)
+
+par(mai=c(0.3,0.3,0.3,0.3))
+
+plot(c(0,0), c(0,0), ylim=c(0,5),
+     xlim=c(190,270),
+     axes=FALSE, xlab=" ",
+     ylab= " ", xaxs = "i", yaxs="i")
+for(i in 1:nrow(meteoDaily)){
+  polygon(c(meteoDaily$doy[i]-0.25,meteoDaily$doy[i]-0.25, 
+            meteoDaily$doy[i]+0.25,meteoDaily$doy[i]+0.25),
+          c(0, meteoDaily$TotPrecip_cm[i], meteoDaily$TotPrecip_cm[i],0),
+          border=NA, col="#91B6C6") 
+}
+
+axis(1, seq(190,270, by=10), rep(" ", length(seq(190,270, by=10))), cex.axis=ax.c, lwd.ticks=tlw)
+  
+axis(2, seq(0,5, by=1), rep(" ", length(seq(0,5, by=1))), las=2, cex.axis=ax.c, lwd.ticks=tlw)
+mtext( seq(0,5, by=1), at= seq(0,5, by=1), side=2, line=3, cex=alc, las=2)
+mtext("Precipitation", side=2, line=13, cex=llc)
+mtext("(cm)", side=2, line=9, cex=llc)
+text(192, 4.85, "b", cex=plc)
+
+
+par(mai=c(0.3,0.3,0.3,0.3))
+
+plot(c(0,0), c(0,0), ylim=c(0,2.2),
+     xlim=c(190,270),
+     axes=FALSE, xlab=" ",
+     ylab= " ", xaxs = "i", yaxs="i")
+
+points(meteoDaily$doy,meteoDaily$aveVPD,
+       pch=19, col="black",
+       type="b", cex=pt.c, lwd=ln.w)
+
+points(meteoDaily$doy,meteoDaily$maxVPD,
+       pch=19, col="#737B7F",
+       type="b", cex=pt.c, lwd=ln.w)
+
+
+axis(1, seq(190,270, by=10), rep(" ", length(seq(190,270, by=10))), cex.axis=ax.c, lwd.ticks=tlw)
+mtext( seq(190,270, by=10), at= seq(190,270, by=10), side=1, line=3, cex=alc)
+mtext("Day of year", side=1, line=6, cex=llc)
+
+
+axis(2, seq(0,2, by=0.5), rep(" ", length(seq(0,2, by=0.5))), las=2, cex.axis=ax.c, lwd.ticks=tlw)
+mtext( c("0","0.5","1.0","1.5","2.0"), at= seq(0,2, by=0.5), side=2, line=3, cex=alc, las=2)
+mtext("Vapor Pressure Deficit ", side=2, line=13, cex=llc)
+mtext("(KPa)", side=2, line=9, cex=llc)
+text(192, 1.9, "c", cex=plc)
+legend("topright", c("average", "maximum"),
+       pch=19, lwd=ln.w, col=c("black", "#737B7F"), bty="n", cex=3)
 
 dev.off()
 
