@@ -205,11 +205,9 @@ dtAll <- dtAll[dtAll$sd <= 0.05 & dtAll$min >0,]
 
 #################
 #check for dt outliers
-# quantile(dtAll$dT, prob=seq(0,1,by=0.001))
+ quantile(dtAll$dT, prob=seq(0,1,by=0.001))
 
-#### QC filter 2    #  
-#definitely few outliers. 99.5% and above are unusually high
-dtAll <- dtAll[dtAll$dT <= quantile(dtAll$dT, prob=0.995),]
+
 
 #join sensor info into table dt
 #make a doy that contains the same night
