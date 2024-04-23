@@ -8,35 +8,22 @@
 ### Uses calculations from sapflux.R to get ###
 ### the data frames described below:        ###
 ###############################################
-### Sapflow calculations for bucktorn       ###
-### removal experiment. The following data  ###
-### frames of interest are outlined below   ###
-###############################################
 ###############################################
 ### ash.tree & buckthorn.tree:              ###  
 ### raw measurements and calculations       ###
 ###############################################
 ### ash.Flow & buckthorn.Flow:              ###
-### L s-1 flow rate at each 15 min increment###
+### L s-1 & m-2 flow rate at each hour      ###
 ### with average & spread over experimental ###
 ### removal groups (C & R)                  ###
 ###############################################
-### ash.Flow.m2 & buckthorn.Flow.m2         ###
-### L m-2 s-1 flow rater per m2 of canopy   ###
-### at each 15 min increment                ###
-### with average & spread over experimental ###
-### removal groups (C & R)                  ###
 ###############################################
-### buckthorn.L.m2.day & ash.L.m2.day       ###
-### total water use in L per day per m2 of  ###
-### canopy leaf area                        ###
-### with average & spread over experimental ###
-### removal groups (C & R)                  ###
 ###############################################
 ### buckthorn.L.day & ash.L.day             ###
-### total water use in L per day per tree   ###
+### total water use in L per day  (& m-2)   ###
 ### with average & spread over experimental ###
 ### removal groups (C & R)                  ###
+###############################################
 ###############################################
 ### Uses calculations from weather.R to get ###
 ### the data frames described below:        ###
