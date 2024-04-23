@@ -474,97 +474,57 @@ ash.Flow <- ash.treeNN %>%
             n.L.s=length(Flow.L.s),
             mean.L.m2.s = mean(Flow.L.m2.s),
             sd.L.m2.s=sd(Flow.L.m2.s), 
-            n.L.m2.s=length(Flow.L.m2.s) )
-
-
-#flow L m-2 leaf s-1 by 15min
-ash.Flow.m2 <- ash.treeNN %>%
-  group_by(doy, hour, DD, Removal) %>%
-  summarise(mean = mean(Flow.L.m2.s),
-            sd=sd(Flow.L.m2.s), 
-            n=length(Flow.L.m2.s))
-#only use time points with at least 3 trees
-ash.Flow <- ash.Flow[ ash.Flow$n >=3,]
-ash.Flow.m2 <- ash.Flow.m2[ ash.Flow.m2$n >=3,]
-ash.Flow$se <- ash.Flow$sd/sqrt(ash.Flow$n)
-ash.Flow.m2$se <- ash.Flow.m2$sd/sqrt(ash.Flow.m2$n)
+            n.L.m2.s=length(Flow.L.m2.s) ) %>%
+  filter(n.L.s >=3)
 
 buckthorn.Flow <- buckthorn.treeNN %>%
-  group_by(doy, hour, DD, Removal) %>%
-  summarise(mean = mean(Flow.L.s),sd=sd(Flow.L.s), n=length(Flow.L.s))
-
-#flow L m-2 leaf s-1 by 15min
-buckthorn.Flow.m2 <- buckthorn.treeNN %>%
-  group_by(doy, hour, DD, Removal) %>%
-  summarise(mean = mean(Flow.L.m2.s),sd=sd(Flow.L.m2.s), n=length(Flow.L.m2.s))
-
-#only use time points with at least 3 trees
-buckthorn.Flow <- buckthorn.Flow[ buckthorn.Flow$n >=3,]
-buckthorn.Flow.m2 <- buckthorn.Flow.m2[ buckthorn.Flow.m2$n >=3,]
-buckthorn.Flow$se <- buckthorn.Flow$sd/sqrt(buckthorn.Flow$n)
-buckthorn.Flow.m2$se <- buckthorn.Flow.m2$sd/sqrt(buckthorn.Flow.m2$n)
+  group_by(doy, hour1, Removal, TreeID) %>%
+  summarise(mean.L.s = mean(Flow.L.s),
+            sd.L.s=sd(Flow.L.s), 
+            n.L.s=length(Flow.L.s),
+            mean.L.m2.s = mean(Flow.L.m2.s),
+            sd.L.m2.s=sd(Flow.L.m2.s), 
+            n.L.m2.s=length(Flow.L.m2.s) ) %>%
+  filter(n.L.s >=3)
 
 
 
-#total liters per day used by the tree 
-ash.L.sens <- ash.treeNN %>%
-  group_by(doy, Removal, sensor) %>%
-  summarise(sum = sum(L.p ), n=length(L.p))
+#total liters per day used by each tree per day
+ash.L.sens <- ash.Flow %>%
+  group_by(doy, Removal, TreeID) %>%
+  summarise(L.day1 = sum(mean.L.s*60*60 ), # sum up L per hour
+            n.day1=length(mean.L.s),
+            L.day1.m2 = sum(mean.L.m2.s*60*60 )) %>%
+  filter(n.day1 >= 23)
 
-ash.L.sens <- ash.L.sens[ ash.L.sens$n == 96,]
-#calculate average daily transpiration in each experimental plot
+buckthorn.L.sens <-buckthorn.Flow %>%
+  group_by(doy, Removal, TreeID) %>%
+  summarise(L.day1 = sum(mean.L.s*60*60 ), # sum up L per hour
+            n.day1=length(mean.L.s),
+            L.day1.m2 = sum(mean.L.m2.s*60*60 )) %>%
+  filter(n.day1 >= 23)
 
+# average daily transpiration by species and plot
 ash.L.day <- ash.L.sens %>%
   group_by(doy, Removal) %>%
-  summarise(mean = mean(sum),sd=sd(sum), n=length(sum))
-ash.L.day <-ash.L.day [ash.L.day$n >= 3,]
-ash.L.day$se <- ash.L.day$sd/sqrt(ash.L.day$n)
-
-buckthorn.L.sens <- buckthorn.treeNN %>%
-  group_by(doy, Removal, sensor) %>%
-  summarise(sum = sum(L.p ), n=length(L.p))
-
-buckthorn.L.sens <- buckthorn.L.sens[ buckthorn.L.sens$n == 96,]
-#calculate average daily transpiration in each experimental plot
+  summarise(L.day = mean(L.day1),
+            n.day = length(L.day1),
+            sd.day = sd(L.day1),
+            L.m2.day = mean(L.day1.m2),
+            sd.m2.day = sd(L.day1.m2)) %>%
+  filter(n.day >=3)
 
 buckthorn.L.day <- buckthorn.L.sens %>%
   group_by(doy, Removal) %>%
-  summarise(mean = mean(sum),sd=sd(sum), n=length(sum))
-buckthorn.L.day <-buckthorn.L.day [buckthorn.L.day$n >= 3,]
-buckthorn.L.day$se <- buckthorn.L.day$sd/sqrt(buckthorn.L.day$n)
-
-#total liters per day used by the tree normalized per m2 of leaf area
-ash.L.m2.sens <- ash.treeNN %>%
-  group_by(doy, Removal, sensor) %>%
-  summarise(sum = sum(L.p.m2 ), n=length(L.p.m2))
-
-ash.L.m2.sens <- ash.L.m2.sens[ ash.L.m2.sens$n == 96,]
-#calculate average daily transpiration in each experimental plot
-
-ash.L.m2.day <- ash.L.m2.sens %>%
-  group_by(doy, Removal) %>%
-  summarise(mean = mean(sum),sd=sd(sum), n=length(sum))
-ash.L.m2.day <-ash.L.m2.day [ash.L.m2.day$n >= 3,]
-ash.L.m2.day$se <- ash.L.m2.day$sd/sqrt(ash.L.m2.day$n)
-
-buckthorn.L.m2.sens <- buckthorn.treeNN %>%
-  group_by(doy, Removal, sensor) %>%
-  summarise(sum = sum(L.p.m2 ), n=length(L.p.m2))
-
-buckthorn.L.m2.sens <- buckthorn.L.m2.sens[ buckthorn.L.m2.sens$n == 96,]
-#calculate average daily transpiration in each experimental plot
-
-buckthorn.L.m2.day <- buckthorn.L.m2.sens %>%
-  group_by(doy, Removal) %>%
-  summarise(mean = mean(sum),sd=sd(sum), n=length(sum))
-buckthorn.L.m2.day <-buckthorn.L.m2.day [buckthorn.L.m2.day$n >= 3,]
-buckthorn.L.m2.day$se <- buckthorn.L.m2.day$sd/sqrt(buckthorn.L.m2.day$n)
+  summarise(L.day = mean(L.day1),
+            n.day = length(L.day1),
+            sd.day = sd(L.day1),
+            L.m2.day = mean(L.day1.m2),
+            sd.m2.day = sd(L.day1.m2)) %>%
+  filter(n.day >=3)
 
 
-rm(list=setdiff(ls(), c("ash.tree","buckthorn.tree",
-                        "ash.Flow","buckthorn.Flow",
-                        "ash.Flow.m2","buckthorn.Flow.m2",
-                        "buckthorn.L.m2.day", "ash.L.m2.day", 
+rm(list=setdiff(ls(), c("ash.Flow","buckthorn.Flow", 
                         "buckthorn.L.day", "ash.L.day",  
                         "weather")))
                         
