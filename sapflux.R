@@ -207,36 +207,40 @@ dtAll <- dtAll[dtAll$sd <= 0.05 & dtAll$min >0,]
 #check for dt outliers
  quantile(dtAll$dT, prob=seq(0,1,by=0.001))
 
+# remove any dt observations that would not be realistic 
+dtAll <- dtAll %>%
+  filter(dT < 15) 
 
 
 #join sensor info into table dt
 #make a doy that contains the same night
 #so new day actually starts at 5 am not midnight
-dtAll$doy5 <- ifelse(dtAll$hour < 5, dtAll$doy-1,dtAll$doy)
 
-night <- dtAll[dtAll$hour < 5|dtAll$hour >= 22,]
+
+night <- dtAll %>%
+  filter(dtAll$hour < 5)
 
 #filter night so maximum in day and sensor is provided
 maxnight1 <- night %>% 
-  group_by(sensor, doy5) %>%
+  group_by(sensor, doy) %>%
   filter(dT == max(dT),na.rm=TRUE)
 
 #remove duplicate maximums that occur for longer than 15 min
 #just take earliest measurement
 maxnight <- maxnight1  %>% 
-  group_by(sensor, doy5) %>%
+  group_by(sensor, doy) %>%
   filter(hour == min(hour),na.rm=TRUE)
 
-ggplot(maxnight, aes(doy5,dT, color=sensor))+
+ggplot(maxnight, aes(doy,dT, color=sensor))+
   geom_point()
 
 # isolate max and join back into table
 maxJoin <- data.frame(sensor=maxnight$sensor, 
-                      doy5=maxnight$doy5,
+                      doy=maxnight$doy,
                       maxDT = maxnight$dT)
 
 # join backinto tabledt
-dtCalct1 <- left_join(dtAll, maxJoin, by=c("sensor","doy5"))
+dtCalct1 <- left_join(dtAll, maxJoin, by=c("sensor","doy"))
 # join sensor info
 dtCalc <- left_join(dtCalct1 , sensors, by=c("sensor"="SensorID"))
 
@@ -264,8 +268,10 @@ dtCalc$velo <- 0.000119*(dtCalc$K^1.231)
 
 
 # separate species types
-ash <- dtCalc[dtCalc$Type == "Ash",]
-buckthorn <- dtCalc[dtCalc$Type == "buckthorn",]
+ash <- dtCalc %>%
+  filter(Type == "Ash")
+buckthorn <- dtCalc %>%
+  filter(Type == "buckthorn")
 
 ##############################
 #### N & S radial check   ----
@@ -337,11 +343,14 @@ azimB.rel <- lm(treeBDir$veloS ~ treeBDir$veloN)
 #regression does not differ significantly from S=0 + 1*N
 
 #use N for final data
-ash.tree <- ash[ash$Direction == "N", ]
+ash.tree <- ash %>%
+  filter(ash$Direction == "N")
 
-buckthorn.tree <- buckthorn[buckthorn$Direction == "N", ]
+buckthorn.tree <- buckthorn %>%
+  filter(buckthorn$Direction == "N")
 
-
+test <- ash.tree %>%
+  filter(doy == 169 & TreeID == 6)
 ##############################
 #### canopy leaf allometry   ----
 
@@ -451,15 +460,23 @@ buckthorn.treeNN$L.p <- buckthorn.treeNN$Flow.L.s* 60 *15
 # per canopy area
 buckthorn.treeNN$L.p.m2  <- buckthorn.treeNN$L.p/buckthorn.treeNN$LA.m2 
 
-
+buckthorn.treeNN$hour1 <- floor(buckthorn.treeNN$hour)
+ash.treeNN$hour1 <- floor(ash.treeNN$hour)
 ##############################
 #### Summary tables    ----
 
 #summary table
-#flow L s every 15 min by treatment
+#flow L s every hour by tree
 ash.Flow <- ash.treeNN %>%
-  group_by(doy, hour, DD, Removal) %>%
-  summarise(mean = mean(Flow.L.s),sd=sd(Flow.L.s), n=length(Flow.L.s))
+  group_by(doy, hour1, Removal, TreeID) %>%
+  summarise(mean.L.s = mean(Flow.L.s),
+            sd.L.s=sd(Flow.L.s), 
+            n.L.s=length(Flow.L.s),
+            mean.L.m2.s = mean(Flow.L.m2.s),
+            sd.L.m2.s=sd(Flow.L.m2.s), 
+            n.L.m2.s=length(Flow.L.m2.s) )
+
+
 #flow L m-2 leaf s-1 by 15min
 ash.Flow.m2 <- ash.treeNN %>%
   group_by(doy, hour, DD, Removal) %>%
