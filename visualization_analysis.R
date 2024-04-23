@@ -52,7 +52,29 @@ buckthornRemove <- read.csv(paste0(dirData[userNumber],"/buckthorn_dbh.csv"))
 
 outDir <- "G:/My Drive/research/projects/buckthorn/figures"
 
+##############################
+#### Analysis ### ----
 
+# filter T for days when errors are reduced
+ash.L.day$species <- rep("Ash", nrow(ash.L.day))
+buckthorn.L.day$species <- rep("Buckthorn", nrow(buckthorn.L.day))
+
+Tday_all <- rbind(ash.L.day, buckthorn.L.day)
+Tday_all$expID <- paste(Tday_all$species, Tday_all$Removal)
+Tday_w <- left_join(Tday_all, meteoDaily, by="doy")
+
+# filter out low VPD and high precip days
+Tday <- Tday_w %>%
+  filter(TotPrecip_cm < 0.1 & maxVPD > 0.6 ) 
+
+ggplot(Tday, aes(doy, L.m2.day, color=expID))+
+         geom_point()
+
+ggplot(Tday, aes(aveVPD, L.m2.day, color=expID))+
+  geom_point()
+
+ggplot(Tday, aes(maxVPD, L.m2.day, color=expID))+
+  geom_point()
 
 ##############################
 #### Standard plot argument ----
