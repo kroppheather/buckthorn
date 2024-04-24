@@ -292,13 +292,29 @@ dtCalc$K <- (dtCalc$maxDT - dtCalc$dTCor)/dtCalc$dTCor
 dtCalc$velo <- 0.000119*(dtCalc$K^1.231)
 
 
+#### Quantile filter: some days look like rainfall may have 
+### caused issues resulting in spikes in sap flow. Apply quanitile filter
+quantileV <- list()
+quantileU <- numeric()
+for(i in 1:16){
+  quantileV[[i]] <- quantile(dtCalc$velo[dtCalc$sensor == i], prob=seq(0,1,by=0.01), na.rm=TRUE)
+  quantileU[i] <- quantileV[[i]][100]
+}
+
+veloQDF <- data.frame(sensor = seq(1,16),
+                      quantU = quantileU)
+
+dtCalcF1 <- left_join(dtCalc, veloQDF, by="sensor") 
+dtCalcF <- dtCalcF1 %>% 
+  filter(velo <= quantU)
+
 # separate species types
-ash <- dtCalc %>%
+ash <- dtCalcF %>%
   filter(Type == "Ash")
-buckthorn <- dtCalc %>%
+buckthorn <- dtCalcF %>%
   filter(Type == "buckthorn")
 
-ggplot(buckthorn%>%filter(sensor == 8), aes(DD, dT, color=as.factor(sensor)))+
+ggplot(dtCalcF%>%filter(sensor == 16), aes(DD, velo, color=as.factor(sensor)))+
   geom_line()+
   geom_point()
 
@@ -467,7 +483,7 @@ ggplot(ash.tree, aes(DD, Flow.L.s, color=as.factor(sensor)))+
 
 buckthorn.tree$Flow.L.s <- buckthorn.tree$Flow.m3.s * 1000
 
-ggplot(buckthorn.tree %>% filter(doy > 200 & doy < 210), aes(DD, Flow.L.s, color=as.factor(sensor)))+
+ggplot(buckthorn.tree, aes(DD, velo, color=as.factor(sensor)))+
   geom_point()+
   geom_line()
 
@@ -505,6 +521,21 @@ ash.Flow <- ash.treeNN %>%
             n.L.m2.s=length(Flow.L.m2.s) ) %>%
   filter(n.L.s >=3)
 
+ash.hour <- ash.Flow %>%
+  group_by(doy, hour1, Removal) %>%
+  summarise(mh.L.s = mean(mean.L.s),
+            sdh.L.s=sd(mean.L.s), 
+            nh.L.s=length(mean.L.s),
+            mh.L.m2.s = mean(mean.L.m2.s),
+            sdh.L.m2.s=sd(mean.L.m2.s), 
+            nh.L.m2.s=length(mean.L.m2.s))%>%
+  filter(nh.L.s >=3)
+            
+
+ggplot(ash.hour, aes(doy + (hour1/24), mh.L.m2.s, color=Removal))+
+         geom_point()+
+         geom_line()
+
 buckthorn.Flow <- buckthorn.treeNN %>%
   group_by(doy, hour1, Removal, TreeID) %>%
   summarise(mean.L.s = mean(Flow.L.s),
@@ -515,7 +546,24 @@ buckthorn.Flow <- buckthorn.treeNN %>%
             n.L.m2.s=length(Flow.L.m2.s) ) %>%
   filter(n.L.s >=3)
 
+buckthorn.hour <- buckthorn.Flow %>%
+  group_by(doy, hour1, Removal) %>%
+  summarise(mh.L.s = mean(mean.L.s),
+            sdh.L.s=sd(mean.L.s), 
+            nh.L.s=length(mean.L.s),
+            mh.L.m2.s = mean(mean.L.m2.s),
+            sdh.L.m2.s=sd(mean.L.m2.s), 
+            nh.L.m2.s=length(mean.L.m2.s))%>%
+  filter(nh.L.s >=3)
 
+ggplot(buckthorn.hour, aes(doy + (hour1/24), mh.L.m2.s, color=Removal))+
+  geom_point()+
+  geom_line()  
+
+ggplot(buckthorn.Flow %>% filter(doy > 200 & doy < 210 ), aes(doy + (hour1/24), mean.L.s,
+       color=as.factor(TreeID)))+
+  geom_point()+
+  geom_line()
 
 #total liters per day used by each tree per day
 ash.L.sens <- ash.Flow %>%
@@ -529,7 +577,7 @@ buckthorn.L.sens <-buckthorn.Flow %>%
   group_by(doy, Removal, TreeID) %>%
   summarise(L.day1 = sum(mean.L.s*60*60 ), # sum up L per hour
             n.day1=length(mean.L.s),
-            L.day1.m2 = sum(mean.L.m2.s*60*60 )) %>%
+            L.day1.m2 = sum(mean.L.m2.s*60*60 )) #%>%
   filter(n.day1 >= 23)
 
 # average daily transpiration by species and plot
@@ -542,6 +590,10 @@ ash.L.day <- ash.L.sens %>%
             sd.m2.day = sd(L.day1.m2)) %>%
   filter(n.day >=3)
 
+ggplot(ash.L.day, aes(doy, L.m2.day, color=Removal))+
+  geom_point()+
+  geom_line()
+
 buckthorn.L.day <- buckthorn.L.sens %>%
   group_by(doy, Removal) %>%
   summarise(L.day = mean(L.day1),
@@ -550,6 +602,10 @@ buckthorn.L.day <- buckthorn.L.sens %>%
             L.m2.day = mean(L.day1.m2),
             sd.m2.day = sd(L.day1.m2)) %>%
   filter(n.day >=3)
+
+ggplot(buckthorn.L.day, aes(doy, L.day))+
+  geom_point()+
+  geom_line()
 
 
 rm(list=setdiff(ls(), c("ash.Flow","buckthorn.Flow", 
