@@ -68,13 +68,16 @@ Tday <- Tday_w %>%
   filter(TotPrecip_cm < 0.1 & maxVPD > 0.6 ) 
 
 ggplot(Tday, aes(doy, L.m2.day, color=expID))+
-         geom_point()
+         geom_point()+
+  geom_line()
 
 ggplot(Tday, aes(aveVPD, L.m2.day, color=expID))+
   geom_point()
 
 ggplot(Tday, aes(maxVPD, L.m2.day, color=expID))+
   geom_point()
+
+# removal completed by 181 doy
 
 ##############################
 #### Standard plot argument ----

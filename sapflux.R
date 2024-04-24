@@ -124,31 +124,68 @@ sensors$sd.cm <- ifelse(sensors$Type == "Ash", #if sensors is ash
 ##############################
 #### dT to v calcs ##### ----
 
+
+
 # organize data for easier calculations
 tabledt <- datSap
 
 
-dtAll <- data.frame(date= rep(tabledt$date, times = 16), 
-                    doy = rep(tabledt$doy, times = 16),
-                    hour = rep(tabledt$hour, times = 16),
-                    DD = rep(tabledt$DD, times = 16),
+
+# quantile filter: removes large spikes in change in temperature that are 
+# greater than 1% the quantile change for all sensors
+
+for(i in 3:18){
+  tabledt[,i] <- ifelse(tabledt[,i] <= 5 | tabledt[,i] >= 13, NA, tabledt[,i])
+}
+
+tableChange <- matrix(rep(NA,nrow(tabledt)*ncol(tabledt)), ncol=ncol(tabledt))
+for(i in 3:18){
+  for(j in 2:nrow(tableChange)){
+    tableChange[j,i] <-  abs(tabledt[j,i] - tabledt[(j-1),i])
+  }
+}
+
+tableChangeL <- list()
+for(i in 3:18){
+  tableChangeL[[i]] <- quantile(tableChange[,i], probs=seq(0,1,by=0.01),na.rm=TRUE)
+}
+# create a flag variable
+changeFlag <- matrix(rep(NA,nrow(tabledt)*ncol(tabledt)), ncol=ncol(tabledt))
+for(i in 3:18){
+  for(j in 2:nrow(tableChange)){
+    changeFlag[j,i] <-  ifelse(tableChange[j,i] >= 0.5,NA,1)
+  }
+} 
+# multiple dt by flag so that flagged values are given a NA
+tabledtF <- tabledt
+for(i in 3:18){
+  for(j in 2:nrow(tableChange)){
+    tabledtF[j,i] <- changeFlag[j,i]*tabledtF[j,i]
+  }
+}
+
+
+dtAll1 <- data.frame(date= rep(tabledtF$date, times = 16), 
+                    doy = rep(tabledtF$doy, times = 16),
+                    hour = rep(tabledtF$hour, times = 16),
+                    DD = rep(tabledtF$DD, times = 16),
                     sensor = rep(seq(1,16), each = nrow(tabledt)), 
-                    dT = c(tabledt[,3],
-                           tabledt[,4],
-                           tabledt[,5],
-                           tabledt[,6],
-                           tabledt[,7],
-                           tabledt[,8],
-                           tabledt[,9],
-                           tabledt[,10],
-                           tabledt[,11],
-                           tabledt[,12],
-                           tabledt[,13],
-                           tabledt[,14],
-                           tabledt[,15],
-                           tabledt[,16],
-                           tabledt[,17],
-                           tabledt[,18]))
+                    dT = c(tabledtF[,3],
+                           tabledtF[,4],
+                           tabledtF[,5],
+                           tabledtF[,6],
+                           tabledtF[,7],
+                           tabledtF[,8],
+                           tabledtF[,9],
+                           tabledtF[,10],
+                           tabledtF[,11],
+                           tabledtF[,12],
+                           tabledtF[,13],
+                           tabledtF[,14],
+                           tabledtF[,15],
+                           tabledtF[,16],
+                           tabledtF[,17],
+                           tabledtF[,18]))
 
 # filter out unreliable data due to voltage regulator issues
 
@@ -162,8 +199,8 @@ dtAll <- data.frame(date= rep(tabledt$date, times = 16),
 #  geom_line()
 
 #indicate which heater
-dtAll$htrN <- ifelse(dtAll$sensor <= 8,1,
-                     ifelse(dtAll$doy < 183 | dtAll$doy > 187, 2,1))
+dtAll1$htrN <- ifelse(dtAll1$sensor <= 8,1,
+                     ifelse(dtAll1$doy < 183 | dtAll1$doy > 187, 2,1))
 # heaterv[which(heaterv$ht1 == 0),]
 
 #calculate daily heater sd
@@ -183,23 +220,20 @@ heatersAll <- data.frame(doy= c(heater1sd$doy,heater2sd$doy),
 
 # join heater info back into dt
 
-dtAll <- left_join(dtAll,heatersAll, by=c("doy","htrN"))
-
+dtAll2 <- left_join(dtAll1,heatersAll, by=c("doy","htrN"))
 
 
 #### QC filter 1    #   
 #filter out days when voltage regulator was unreliable
 #either too variable or heaters turned off at any point
-dtAll <- dtAll[dtAll$sd <= 0.05 & dtAll$min >0,]
+# filter out based on day given the amount of missing data
+dtAll <- dtAll2 %>%
+  filter(doy > 182)
 
 
 #################
 #check for dt outliers
- quantile(dtAll$dT, prob=seq(0,1,by=0.001))
-
-# remove any dt observations that would not be realistic 
-dtAll <- dtAll %>%
-  filter(dT < 15) 
+ quantile(dtAll$dT, prob=seq(0,1,by=0.001), na.rm=TRUE)
 
 
 #join sensor info into table dt
@@ -221,8 +255,9 @@ maxnight <- maxnight1  %>%
   group_by(sensor, doy) %>%
   filter(hour == min(hour),na.rm=TRUE)
 
-ggplot(maxnight, aes(doy,dT, color=sensor))+
-  geom_point()
+ggplot(maxnight, aes(doy,dT, color=as.factor(sensor)))+
+  geom_point()+
+  geom_line()
 
 # isolate max and join back into table
 maxJoin <- data.frame(sensor=maxnight$sensor, 
@@ -262,6 +297,10 @@ ash <- dtCalc %>%
   filter(Type == "Ash")
 buckthorn <- dtCalc %>%
   filter(Type == "buckthorn")
+
+ggplot(buckthorn%>%filter(sensor == 8), aes(DD, dT, color=as.factor(sensor)))+
+  geom_line()+
+  geom_point()
 
 ##############################
 #### N & S radial check   ----
@@ -339,8 +378,9 @@ ash.tree <- ash %>%
 buckthorn.tree <- buckthorn %>%
   filter(buckthorn$Direction == "N")
 
-test <- ash.tree %>%
-  filter(doy == 169 & TreeID == 6)
+
+
+
 ##############################
 #### canopy leaf allometry   ----
 
@@ -421,11 +461,15 @@ buckthorn.tree$Flow.m3.s <- buckthorn.tree$velo * buckthorn.tree$sap.aream2
 
 ash.tree$Flow.L.s <- ash.tree$Flow.m3.s * 1000
 
-ggplot(ash.tree, aes(DD, Flow.L.s, color=sensor))+
+ggplot(ash.tree, aes(DD, Flow.L.s, color=as.factor(sensor)))+
   geom_point()+
   geom_line()
 
 buckthorn.tree$Flow.L.s <- buckthorn.tree$Flow.m3.s * 1000
+
+ggplot(buckthorn.tree %>% filter(doy > 200 & doy < 210), aes(DD, Flow.L.s, color=as.factor(sensor)))+
+  geom_point()+
+  geom_line()
 
 #normalize by canopy leaf area
 ash.tree$Flow.L.m2.s <- ash.tree$Flow.L.s /ash.tree$LA.m2 
@@ -434,21 +478,15 @@ buckthorn.tree$Flow.L.m2.s <- buckthorn.tree$Flow.L.s /buckthorn.tree$LA.m2
 
 #summarize total per day for each tree
 #remove NA
-ash.treeNN <- ash.tree[is.na(ash.tree$Flow.L.s)==FALSE,]
-#calculate total water use by each tree in a day
-#total liters used in 15 min period
-ash.treeNN$L.p <- ash.treeNN$Flow.L.s* 60 *15
-#per canopy area
-ash.treeNN$L.p.m2  <- ash.treeNN$L.p/ash.treeNN$LA.m2 
+ash.treeNN <- ash.tree %>%
+  filter(is.na(Flow.L.s)==FALSE)
+
 
 #summarize total per day for each tree
 #remove NA
-buckthorn.treeNN <- buckthorn.tree[is.na(buckthorn.tree$Flow.L.s)==FALSE,]
-#calculate total water use by each tree in a day
-#total liters used in 15 min period
-buckthorn.treeNN$L.p <- buckthorn.treeNN$Flow.L.s* 60 *15
-# per canopy area
-buckthorn.treeNN$L.p.m2  <- buckthorn.treeNN$L.p/buckthorn.treeNN$LA.m2 
+buckthorn.treeNN <- buckthorn.tree %>%
+  filter(is.na(buckthorn.tree$Flow.L.s)==FALSE)
+
 
 buckthorn.treeNN$hour1 <- floor(buckthorn.treeNN$hour)
 ash.treeNN$hour1 <- floor(ash.treeNN$hour)
