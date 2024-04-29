@@ -135,7 +135,7 @@ dtAll1 <- data.frame(date= rep(tabledtF$date, times = 16),
                     doy = rep(tabledtF$doy, times = 16),
                     hourD = rep(tabledtF$hour, times = 16),
                     DD = rep(tabledtF$DD, times = 16),
-                    sensor = rep(seq(1,16), each = nrow(tabledt)), 
+                    sensor = rep(seq(1,16), each = nrow(tabledtF)), 
                     dT = c(tabledtF[,3],
                            tabledtF[,4],
                            tabledtF[,5],
@@ -248,12 +248,13 @@ quantile(dtCalc$velo[dtCalc$sensor == 7], prob=seq(0,1,by=0.01), na.rm=TRUE)
 quantile(dtCalc$velo[dtCalc$sensor == 10], prob=seq(0,1,by=0.01), na.rm=TRUE)
 
 dtCalc$FlagQA <- ifelse(dtCalc$velo >= 1e-04 & dtCalc$sensor == 7,1,
-                        ifelse(dtCalc$velo >= 4.5e-05 & dtCalc$sensor == 10,1,0))
+                        ifelse(dtCalc$velo >= 4.5e-05 & dtCalc$sensor == 10,1,
+                               ifelse(dtCalc$velo >= 1e-04 & dtCalc$sensor == 16,1, 0)))
                         
 dtCalcF <- dtCalc %>% 
   filter(FlagQA == 0)
 
-ggplot(dtCalcF , aes(doy + (hour/24),velo, color=as.factor(sensor)))+
+ggplot(dtCalcF  , aes(doy + (hour/24),velo, color=as.factor(sensor)))+
   geom_point()+
   geom_line()
 
@@ -355,9 +356,7 @@ plot(treeBDir$veloN, treeBDir$veloS)
 abline(azimB.rel)
 abline(0,1, col="red")
 
-ggplot(treeBDir, aes(veloN,veloS))+
-  geom_point()+
-  geom_abline()
+
 #regression has  a lot of noise 
 # and variation around the 1:1 line. The slope coefficient
 # does not explain enough variability to warrent a difference
@@ -477,7 +476,7 @@ ash.treeNN <- ash.tree %>%
 #summarize total per day for each tree
 #remove NA
 buckthorn.treeNN <- buckthorn.tree %>%
-  filter(is.na(buckthorn.tree$Flow.L.s)==FALSE)
+  filter(is.na(Flow.L.s)==FALSE)
 
 
 ##############################
@@ -485,27 +484,45 @@ buckthorn.treeNN <- buckthorn.tree %>%
  
 # summarize hourly data by treatment           
 
-buckthorn.hour <- buckthorn.Flow %>%
+buckthorn.hour <- buckthorn.treeNN %>%
   group_by(doy, hour, Removal) %>%
-  summarise(mh.L.s = mean(mean.L.s),
-            sdh.L.s=sd(mean.L.s), 
-            nh.L.s=length(mean.L.s),
-            mh.L.m2.s = mean(mean.L.m2.s),
-            sdh.L.m2.s=sd(mean.L.m2.s), 
-            nh.L.m2.s=length(mean.L.m2.s))%>%
+  summarise(mh.L.s = mean(Flow.L.s),
+            sdh.L.s=sd(Flow.L.s), 
+            nh.L.s=length(Flow.L.s),
+            mh.L.m2.s = mean(Flow.L.m2.s),
+            sdh.L.m2.s=sd(Flow.L.m2.s), 
+            nh.L.m2.s=length(Flow.L.m2.s))%>%
   filter(nh.L.s >=3)
 
-ggplot(buckthorn.hour, aes(doy + (hour1/24), mh.L.m2.s, color=Removal))+
+ggplot(buckthorn.hour, aes(doy + (hour/24), mh.L.m2.s, color=Removal))+
+  geom_point()+
+  geom_line()  
+
+ash.hour <- ash.treeNN %>%
+  group_by(doy, hour, Removal) %>%
+  summarise(mh.L.s = mean(Flow.L.s),
+            sdh.L.s=sd(Flow.L.s), 
+            nh.L.s=length(Flow.L.s),
+            mh.L.m2.s = mean(Flow.L.m2.s),
+            sdh.L.m2.s=sd(Flow.L.m2.s), 
+            nh.L.m2.s=length(Flow.L.m2.s))%>%
+  filter(nh.L.s >=3)
+
+ggplot(ash.hour, aes(doy + (hour/24), mh.L.m2.s, color=Removal))+
+  geom_point()+
+  geom_line() 
+
+ggplot(ash.hour %>% filter(doy>208 & doy <220), aes(doy + (hour/24), mh.L.m2.s, color=Removal))+
   geom_point()+
   geom_line()  
 
 
 #total liters per day used by each tree per day
-ash.L.sens <- ash.Flow %>%
+ash.L.sens <- ash.treeNN %>%
   group_by(doy, Removal, TreeID) %>%
-  summarise(L.day1 = sum(mean.L.s*60*60 ), # sum up L per hour
-            n.day1=length(mean.L.s),
-            L.day1.m2 = sum(mean.L.m2.s*60*60 )) %>%
+  summarise(L.day1 = sum(Flow.L.s*60*60 ), # sum up L per hour
+            n.day1=length(Flow.L.s),
+            L.day1.m2 = sum(Flow.L.m2.s*60*60 )) %>%
   filter(n.day1 >= 23)
 
 buckthorn.L.sens <- buckthorn.treeNN %>%
