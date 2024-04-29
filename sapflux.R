@@ -127,47 +127,13 @@ sensors$sd.cm <- ifelse(sensors$Type == "Ash", #if sensors is ash
 
 
 # organize data for easier calculations
-tabledt <- datSap
+tabledtF <- datSap
 
-
-
-# quantile filter: removes large spikes in change in temperature that are 
-# greater than 1% the quantile change for all sensors
-
-for(i in 3:18){
-  tabledt[,i] <- ifelse(tabledt[,i] <= 5 | tabledt[,i] >= 13, NA, tabledt[,i])
-}
-
-tableChange <- matrix(rep(NA,nrow(tabledt)*ncol(tabledt)), ncol=ncol(tabledt))
-for(i in 3:18){
-  for(j in 2:nrow(tableChange)){
-    tableChange[j,i] <-  abs(tabledt[j,i] - tabledt[(j-1),i])
-  }
-}
-
-tableChangeL <- list()
-for(i in 3:18){
-  tableChangeL[[i]] <- quantile(tableChange[,i], probs=seq(0,1,by=0.01),na.rm=TRUE)
-}
-# create a flag variable
-changeFlag <- matrix(rep(NA,nrow(tabledt)*ncol(tabledt)), ncol=ncol(tabledt))
-for(i in 3:18){
-  for(j in 2:nrow(tableChange)){
-    changeFlag[j,i] <-  ifelse(tableChange[j,i] >= 0.5,NA,1)
-  }
-} 
-# multiple dt by flag so that flagged values are given a NA
-tabledtF <- tabledt
-for(i in 3:18){
-  for(j in 2:nrow(tableChange)){
-    tabledtF[j,i] <- changeFlag[j,i]*tabledtF[j,i]
-  }
-}
 
 
 dtAll1 <- data.frame(date= rep(tabledtF$date, times = 16), 
                     doy = rep(tabledtF$doy, times = 16),
-                    hour = rep(tabledtF$hour, times = 16),
+                    hourD = rep(tabledtF$hour, times = 16),
                     DD = rep(tabledtF$DD, times = 16),
                     sensor = rep(seq(1,16), each = nrow(tabledt)), 
                     dT = c(tabledtF[,3],
@@ -186,54 +152,30 @@ dtAll1 <- data.frame(date= rep(tabledtF$date, times = 16),
                            tabledtF[,16],
                            tabledtF[,17],
                            tabledtF[,18]))
+# calculate hourly average
+dtAll1$hour <- floor(dtAll1$hourD)
+
+dT_hour <- na.omit(dtAll1) %>%
+  group_by(doy, hour, sensor) %>%
+  summarise(mean.dT = mean(dT),
+            n.Dt = length(dT))
+
+dT_hour$dT <- dT_hour$mean.dT
 
 # filter out unreliable data due to voltage regulator issues
-
-#moved heaters to more reliable first regulator on july 2 10-10:30 and replaced reculator on July 6 10 am
-#ggplot(heaterv, aes(x=date,y=ht1))+ 
-#  geom_point()+
-#  geom_line()
-
-#ggplot(heaterv, aes(x=date,y=ht2))+ 
-#  geom_point()+
-#  geom_line()
-
-#indicate which heater
-dtAll1$htrN <- ifelse(dtAll1$sensor <= 8,1,
-                     ifelse(dtAll1$doy < 183 | dtAll1$doy > 187, 2,1))
-# heaterv[which(heaterv$ht1 == 0),]
-
-#calculate daily heater sd
-heater1sd <- aggregate(heaterv$ht1, by=list(doy=heaterv$doy),FUN="sd")
-heater2sd <- aggregate(heaterv$ht2, by=list(doy=heaterv$doy),FUN="sd")
-heater1min <- aggregate(heaterv$ht1, by=list(doy=heaterv$doy),FUN="min")
-heater2min <- aggregate(heaterv$ht2, by=list(doy=heaterv$doy),FUN="min")
-
-heatersAll <- data.frame(doy= c(heater1sd$doy,heater2sd$doy),
-                         htrN=c(rep(1,nrow(heater1sd)),rep(2,nrow(heater2sd))),
-                         sd = c(heater1sd$x,heater2sd$x),
-                         min=c(heater1min$x,heater2min$x))
-
-#ggplot(heatersAll, aes(doy, sd, col=htrN))+
- # geom_point()
-
-
-# join heater info back into dt
-
-dtAll2 <- left_join(dtAll1,heatersAll, by=c("doy","htrN"))
 
 
 #### QC filter 1    #   
 #filter out days when voltage regulator was unreliable
 #either too variable or heaters turned off at any point
 # filter out based on day given the amount of missing data
-dtAll <- dtAll2 %>%
-  filter(doy > 182)
+dtAll <- dT_hour %>%
+  filter(doy > 191)
 
 
 #################
 #check for dt outliers
- quantile(dtAll$dT, prob=seq(0,1,by=0.001), na.rm=TRUE)
+ quantile(dtAll$mean.dT, prob=seq(0,1,by=0.001), na.rm=TRUE)
 
 
 #join sensor info into table dt
@@ -242,7 +184,7 @@ dtAll <- dtAll2 %>%
 
 
 night <- dtAll %>%
-  filter(dtAll$hour < 5)
+  filter(hour < 5)
 
 #filter night so maximum in day and sensor is provided
 maxnight1 <- night %>% 
@@ -269,6 +211,10 @@ dtCalct1 <- left_join(dtAll, maxJoin, by=c("sensor","doy"))
 # join sensor info
 dtCalc <- left_join(dtCalct1 , sensors, by=c("sensor"="SensorID"))
 
+# get mean hourly dT
+#summary table
+#flow L s every hour by tree
+
 # from clearwater
 
 #sap velocity m s-1 (v)
@@ -291,22 +237,26 @@ dtCalc$dTCor <- (dtCalc$dT - (dtCalc$b * dtCalc$maxDT))/dtCalc$a
 dtCalc$K <- (dtCalc$maxDT - dtCalc$dTCor)/dtCalc$dTCor
 dtCalc$velo <- 0.000119*(dtCalc$K^1.231)
 
+ggplot(dtCalc %>% filter(sensor==10), aes(doy + (hour/24),velo, color=as.factor(sensor)))+
+  geom_point()+
+  geom_line()
 
 #### Quantile filter: some days look like rainfall may have 
-### caused issues resulting in spikes in sap flow. Apply quanitile filter
-quantileV <- list()
-quantileU <- numeric()
-for(i in 1:16){
-  quantileV[[i]] <- quantile(dtCalc$velo[dtCalc$sensor == i], prob=seq(0,1,by=0.01), na.rm=TRUE)
-  quantileU[i] <- quantileV[[i]][100]
-}
+### caused issues resulting in spikes in sap flow. Apply quanitile filter for sensors 7 & 10
+### 98% for sensor 10. sensor 7 was very prone to outliers on rainy days so went with 97
+quantile(dtCalc$velo[dtCalc$sensor == 7], prob=seq(0,1,by=0.01), na.rm=TRUE)
+quantile(dtCalc$velo[dtCalc$sensor == 10], prob=seq(0,1,by=0.01), na.rm=TRUE)
 
-veloQDF <- data.frame(sensor = seq(1,16),
-                      quantU = quantileU)
+dtCalc$FlagQA <- ifelse(dtCalc$velo >= 1e-04 & dtCalc$sensor == 7,1,
+                        ifelse(dtCalc$velo >= 4.5e-05 & dtCalc$sensor == 10,1,0))
+                        
+dtCalcF <- dtCalc %>% 
+  filter(FlagQA == 0)
 
-dtCalcF1 <- left_join(dtCalc, veloQDF, by="sensor") 
-dtCalcF <- dtCalcF1 %>% 
-  filter(velo <= quantU)
+ggplot(dtCalcF , aes(doy + (hour/24),velo, color=as.factor(sensor)))+
+  geom_point()+
+  geom_line()
+
 
 # separate species types
 ash <- dtCalcF %>%
@@ -314,85 +264,111 @@ ash <- dtCalcF %>%
 buckthorn <- dtCalcF %>%
   filter(Type == "buckthorn")
 
-ggplot(dtCalcF%>%filter(sensor == 16), aes(DD, velo, color=as.factor(sensor)))+
-  geom_line()+
-  geom_point()
+
+ggplot(buckthorn , aes(doy + (hour/24),velo, color=as.factor(sensor)))+
+  geom_point()+
+  geom_line()
+ggplot(ash , aes(doy + (hour/24),velo, color=as.factor(sensor)))+
+  geom_point()+
+  geom_line()
 
 ##############################
 #### N & S radial check   ----
 
 # compare N & S sensors for ash
-sens3 <- data.frame(date = ash$date[ash$sensor == 3],
+sens3 <- data.frame(doy = ash$doy[ash$sensor == 3],
+                    hour = ash$hour[ash$sensor == 3],
                     veloN = ash$velo[ash$sensor == 3])
                      
-sens4 <- data.frame(date = ash$date[ash$sensor == 4],
+sens4 <- data.frame(doy = ash$doy[ash$sensor == 4],
+                    hour = ash$hour[ash$sensor == 4],
                     veloS = ash$velo[ash$sensor == 4])
 
-treeD1 <- inner_join(sens3,sens4, by="date")
+treeD1 <- inner_join(sens3,sens4, by=c("doy", "hour"))
 
 #compare N & S sensors for ash
-sens12 <- data.frame(date = ash$date[ash$sensor == 12],
+sens12 <- data.frame(doy = ash$doy[ash$sensor == 12],
+                     hour = ash$hour[ash$sensor == 12],
                     veloN = ash$velo[ash$sensor == 12])
 
-sens11 <- data.frame(date = ash$date[ash$sensor == 11],
+sens11 <- data.frame(doy = ash$doy[ash$sensor == 11],
+                     hour = ash$hour[ash$sensor == 11],
                     veloS = ash$velo[ash$sensor == 11])
 
-treeD2 <- inner_join(sens12,sens11, by="date")
+treeD2 <- inner_join(sens12,sens11,  by=c("doy", "hour"))
 
-sens15 <- data.frame(date = ash$date[ash$sensor == 15],
+sens15 <- data.frame(doy = ash$doy[ash$sensor == 15],
+                     hour = ash$hour[ash$sensor == 15],
                      veloN = ash$velo[ash$sensor == 15])
 
-sens16 <- data.frame(date = ash$date[ash$sensor == 16],
+sens16 <- data.frame(doy = ash$doy[ash$sensor == 16],
+                     hour = ash$hour[ash$sensor == 16],
                      veloS = ash$velo[ash$sensor == 16])
 
-treeD3 <- inner_join(sens15,sens16, by="date")
+treeD3 <- inner_join(sens15,sens16, by=c("doy", "hour"))
 
 treeDir <- rbind(treeD1,treeD2,treeD3)
+
+
 #check relationship
 azim.rel <- lm(treeDir$veloS ~ treeDir$veloN)
-# summary(azim.rel)
+ summary(azim.rel)
 
-#ggplot(treeDir, aes(veloN,veloS))+
-  #geom_point()+
-  #geom_abline()
+ggplot(treeDir, aes(veloN,veloS))+
+  geom_point()+
+  geom_abline()
 
 #regression does not differ significantly from S=0 + 1*N
 
 # check buckthorn
 
 
-sens7 <- data.frame(date = ash$date[ash$sensor == 7],
-                    veloN = ash$velo[ash$sensor == 7])
+sens7 <- data.frame(doy = buckthorn$doy[buckthorn$sensor == 7],
+                    hour = buckthorn$hour[buckthorn$sensor == 7],
+                    veloN = buckthorn$velo[buckthorn$sensor == 7])
 
-sens9 <- data.frame(date = ash$date[ash$sensor == 9],
-                    veloS = ash$velo[ash$sensor == 9])
+sens9 <- data.frame(doy = buckthorn$doy[buckthorn$sensor == 9],
+                    hour = buckthorn$hour[buckthorn$sensor == 9],
+                    veloS = buckthorn$velo[buckthorn$sensor == 9])
 
-treeB1 <- inner_join(sens3,sens4, by="date")
+treeB1 <- inner_join(sens3,sens4,by=c("doy", "hour"))
 
-sens8 <- data.frame(date = ash$date[ash$sensor == 8],
-                     veloN = ash$velo[ash$sensor == 8])
+sens8 <- data.frame(doy = buckthorn$doy[buckthorn$sensor == 8],
+                    hour = buckthorn$hour[buckthorn$sensor == 8],
+                     veloN = buckthorn$velo[buckthorn$sensor == 8])
 
-sens10 <- data.frame(date = ash$date[ash$sensor == 10],
-                     veloS = ash$velo[ash$sensor == 10])
+sens10 <- data.frame(doy = buckthorn$doy[buckthorn$sensor == 10],
+                     hour = buckthorn$hour[buckthorn$sensor == 10],
+                     veloS = buckthorn$velo[buckthorn$sensor == 10])
 
-treeB2 <- inner_join(sens8,sens10, by="date")
+treeB2 <- inner_join(sens8,sens10, by=c("doy", "hour"))
 
 treeBDir <- rbind(treeB1,treeB2)
 
-azimB.rel <- lm(treeBDir$veloS ~ treeBDir$veloN)
-# summary(azimB.rel)
+treeBDir <- treeBDir %>%
+  filter(veloN <= 0.00007)
 
-#ggplot(treeBDir, aes(veloN,veloS))+
-#  geom_point()+
-#  geom_abline()
-#regression does not differ significantly from S=0 + 1*N
+azimB.rel <- lm(treeBDir$veloS ~ treeBDir$veloN)
+ summary(azimB.rel)
+ 
+plot(treeBDir$veloN, treeBDir$veloS)
+abline(azimB.rel)
+abline(0,1, col="red")
+
+ggplot(treeBDir, aes(veloN,veloS))+
+  geom_point()+
+  geom_abline()
+#regression has  a lot of noise 
+# and variation around the 1:1 line. The slope coefficient
+# does not explain enough variability to warrent a difference
+# from the 1:1 line.
 
 #use N for final data
 ash.tree <- ash %>%
-  filter(ash$Direction == "N")
+  filter(Direction == "N")
 
 buckthorn.tree <- buckthorn %>%
-  filter(buckthorn$Direction == "N")
+  filter(Direction == "N")
 
 
 
@@ -477,13 +453,13 @@ buckthorn.tree$Flow.m3.s <- buckthorn.tree$velo * buckthorn.tree$sap.aream2
 
 ash.tree$Flow.L.s <- ash.tree$Flow.m3.s * 1000
 
-ggplot(ash.tree, aes(DD, Flow.L.s, color=as.factor(sensor)))+
+ggplot(ash.tree, aes(doy + (hour/24), Flow.L.s, color=as.factor(sensor)))+
   geom_point()+
   geom_line()
 
 buckthorn.tree$Flow.L.s <- buckthorn.tree$Flow.m3.s * 1000
 
-ggplot(buckthorn.tree, aes(DD, velo, color=as.factor(sensor)))+
+ggplot(buckthorn.tree, aes(doy + (hour/24), Flow.L.s, color=as.factor(sensor)))+
   geom_point()+
   geom_line()
 
@@ -504,50 +480,13 @@ buckthorn.treeNN <- buckthorn.tree %>%
   filter(is.na(buckthorn.tree$Flow.L.s)==FALSE)
 
 
-buckthorn.treeNN$hour1 <- floor(buckthorn.treeNN$hour)
-ash.treeNN$hour1 <- floor(ash.treeNN$hour)
 ##############################
 #### Summary tables    ----
-
-#summary table
-#flow L s every hour by tree
-ash.Flow <- ash.treeNN %>%
-  group_by(doy, hour1, Removal, TreeID) %>%
-  summarise(mean.L.s = mean(Flow.L.s),
-            sd.L.s=sd(Flow.L.s), 
-            n.L.s=length(Flow.L.s),
-            mean.L.m2.s = mean(Flow.L.m2.s),
-            sd.L.m2.s=sd(Flow.L.m2.s), 
-            n.L.m2.s=length(Flow.L.m2.s) ) %>%
-  filter(n.L.s >=3)
-
-ash.hour <- ash.Flow %>%
-  group_by(doy, hour1, Removal) %>%
-  summarise(mh.L.s = mean(mean.L.s),
-            sdh.L.s=sd(mean.L.s), 
-            nh.L.s=length(mean.L.s),
-            mh.L.m2.s = mean(mean.L.m2.s),
-            sdh.L.m2.s=sd(mean.L.m2.s), 
-            nh.L.m2.s=length(mean.L.m2.s))%>%
-  filter(nh.L.s >=3)
-            
-
-ggplot(ash.hour, aes(doy + (hour1/24), mh.L.m2.s, color=Removal))+
-         geom_point()+
-         geom_line()
-
-buckthorn.Flow <- buckthorn.treeNN %>%
-  group_by(doy, hour1, Removal, TreeID) %>%
-  summarise(mean.L.s = mean(Flow.L.s),
-            sd.L.s=sd(Flow.L.s), 
-            n.L.s=length(Flow.L.s),
-            mean.L.m2.s = mean(Flow.L.m2.s),
-            sd.L.m2.s=sd(Flow.L.m2.s), 
-            n.L.m2.s=length(Flow.L.m2.s) ) %>%
-  filter(n.L.s >=3)
+ 
+# summarize hourly data by treatment           
 
 buckthorn.hour <- buckthorn.Flow %>%
-  group_by(doy, hour1, Removal) %>%
+  group_by(doy, hour, Removal) %>%
   summarise(mh.L.s = mean(mean.L.s),
             sdh.L.s=sd(mean.L.s), 
             nh.L.s=length(mean.L.s),
@@ -560,10 +499,6 @@ ggplot(buckthorn.hour, aes(doy + (hour1/24), mh.L.m2.s, color=Removal))+
   geom_point()+
   geom_line()  
 
-ggplot(buckthorn.Flow %>% filter(doy > 200 & doy < 210 ), aes(doy + (hour1/24), mean.L.s,
-       color=as.factor(TreeID)))+
-  geom_point()+
-  geom_line()
 
 #total liters per day used by each tree per day
 ash.L.sens <- ash.Flow %>%
@@ -573,12 +508,15 @@ ash.L.sens <- ash.Flow %>%
             L.day1.m2 = sum(mean.L.m2.s*60*60 )) %>%
   filter(n.day1 >= 23)
 
-buckthorn.L.sens <-buckthorn.Flow %>%
+buckthorn.L.sens <- buckthorn.treeNN %>%
   group_by(doy, Removal, TreeID) %>%
-  summarise(L.day1 = sum(mean.L.s*60*60 ), # sum up L per hour
-            n.day1=length(mean.L.s),
-            L.day1.m2 = sum(mean.L.m2.s*60*60 )) #%>%
+  summarise(L.day1 = sum(Flow.L.s*60*60 ), # sum up L per hour
+            n.day1=length(Flow.L.s),
+            L.day1.m2 = sum(Flow.L.m2.s*60*60 )) #%>%
   filter(n.day1 >= 23)
+  
+  test <- buckthorn.treeNN %>%
+    filter(
 
 # average daily transpiration by species and plot
 ash.L.day <- ash.L.sens %>%
