@@ -529,11 +529,10 @@ buckthorn.L.sens <- buckthorn.treeNN %>%
   group_by(doy, Removal, TreeID) %>%
   summarise(L.day1 = sum(Flow.L.s*60*60 ), # sum up L per hour
             n.day1=length(Flow.L.s),
-            L.day1.m2 = sum(Flow.L.m2.s*60*60 )) #%>%
+            L.day1.m2 = sum(Flow.L.m2.s*60*60 )) %>%
   filter(n.day1 >= 23)
   
-  test <- buckthorn.treeNN %>%
-    filter(
+
 
 # average daily transpiration by species and plot
 ash.L.day <- ash.L.sens %>%
@@ -563,7 +562,7 @@ ggplot(buckthorn.L.day, aes(doy, L.day))+
   geom_line()
 
 
-rm(list=setdiff(ls(), c("ash.Flow","buckthorn.Flow", 
+rm(list=setdiff(ls(), c("ash.hour","buckthorn.hour", 
                         "buckthorn.L.day", "ash.L.day",  
                         "weather")))
                         
