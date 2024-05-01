@@ -422,21 +422,14 @@ ash.tree$LA.m2 <- -66.185 +  6.579*ash.tree$DBH.cm
 
 #Leaf Area/ leaf Mass (cm2 / g)
 buckthorn.SLA <- mean(buckthornSLA$area.cm2/buckthornSLA$weight.g)
-
-buckthornLA$Leaf.area <- buckthorn.SLA * buckthornLA$Dry.Leaf.g
-buckthornLA$LA.m2 <-  buckthornLA$Leaf.area*0.0001
+buckthorn.SLA.m2kg <- (buckthorn.SLA*1000)*(1/100)*(1/100)
 
 
-
-#check relationship
-# lm.log<- lm(log(buckthornLA$LA.m2) ~ log(buckthornLA$DBH.cm))
-# summary(lm.log)
-# plot(buckthornLA$DBH.cm, buckthornLA$LA.m2)
-# plot(log(buckthornLA$DBH.cm), log(buckthornLA$LA.m2))
-#regression log(LA (m2)) = -1.058 + 1.828 * log(dbh.cm)
+# use Mascaro allometry
 
 #estimate leaf area in m2
-buckthorn.tree$LA.m2 <- exp(-1.058 + (1.828*log(buckthorn.tree$DBH.cm)))
+buckthorn.tree$LA.m2 <- (0.0287 *buckthorn.tree$DBH.cm ^1.6046)*buckthorn.SLA.m2kg
+
 
 ##############################
 #### Flow calculations   ----

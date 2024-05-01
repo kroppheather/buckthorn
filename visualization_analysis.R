@@ -65,19 +65,44 @@ Tday_w <- left_join(Tday_all, meteoDaily, by="doy")
 
 # filter out low VPD and high precip days
 Tday <- Tday_w %>%
-  filter(TotPrecip_cm < 0.1 & maxVPD > 0.6 ) 
+  filter(TotPrecip_cm < 0.2 & maxVPD > 0.6  ) 
+
+# add standard error calc for plotting
+Tday$se.m2 <- Tday$sd.m2.day/sqrt(Tday$n.day)
+
 
 ggplot(Tday, aes(doy, L.m2.day, color=expID))+
-         geom_point()+
+  geom_point()+
   geom_line()
-
-ggplot(Tday, aes(aveVPD, L.m2.day, color=expID))+
-  geom_point()
 
 ggplot(Tday, aes(maxVPD, L.m2.day, color=expID))+
   geom_point()
 
+ggplot(Tday %>% filter(species == "Ash"), aes(log(maxVPD), L.m2.day, color=expID))+
+  geom_point()
+
+lmAC <- lm(Tday$L.m2.day[Tday$Removal == "C" & Tday$species == "Ash"] ~ log(Tday$maxVPD[Tday$Removal == "C" & Tday$species == "Ash"]))
+summary(lmAC)
+
+plot(Tday$maxVPD[Tday$Removal == "C" & Tday$species == "Ash"],lmAC$residuals)
+qqnorm(lmAC$residuals)
+qqline(lmAC$residuals)
+
+lmAR <- lm(Tday$L.m2.day[Tday$Removal == "R" & Tday$species == "Ash"] ~ log(Tday$maxVPD[Tday$Removal == "R" & Tday$species == "Ash"]))
+summary(lmAR)
+
+plot(Tday$maxVPD[Tday$Removal == "R" & Tday$species == "Ash"],lmAC$residuals)
+qqnorm(lmAR$residuals)
+qqline(lmAR$residuals)
+
 # removal completed by 181 doy
+
+# seperate again by species for plotting
+ash.L.m2.dayS <- Tday %>% 
+  filter(species == "Ash")
+  
+buckthorn.L.m2.dayS <- Tday %>% 
+  filter(species == "Buckthorn")
 
 ##############################
 #### Standard plot argument ----
@@ -209,8 +234,6 @@ dev.off()
 ##############################
 #### daily T per unit leaf ----
 
-ash.L.m2.dayS <- ash.L.m2.day[ash.L.m2.day$doy >= 191, ]
-buckthorn.L.m2.dayS <- buckthorn.L.m2.day[buckthorn.L.m2.day$doy >= 191, ]
 
 
 png(paste0(outDir,"/Tday.png"), width = 20, height = 7, units = "in", res=300)
@@ -220,36 +243,36 @@ plot(c(0,0), c(0,0), ylim=c(0,0.5),
      axes=FALSE, xlab=" ",
      ylab= " ", xaxs = "i", yaxs="i")
 points(ash.L.m2.dayS$doy[ash.L.m2.dayS$Removal == "C"],
-       ash.L.m2.dayS$mean[ash.L.m2.dayS$Removal == "C"],
+       ash.L.m2.dayS$L.m2.day[ash.L.m2.dayS$Removal == "C"],
        pch=19, col=pt.cols[1],
        type="b", cex=pt.c, lwd=ln.w)
 arrows(ash.L.m2.dayS$doy[ash.L.m2.dayS$Removal == "C"],
-       ash.L.m2.dayS$mean[ash.L.m2.dayS$Removal == "C"]-ash.L.m2.dayS$se[ash.L.m2.dayS$Removal == "C"] ,
+       ash.L.m2.dayS$L.m2.day[ash.L.m2.dayS$Removal == "C"]-ash.L.m2.dayS$se.m2[ash.L.m2.dayS$Removal == "C"] ,
        ash.L.m2.dayS$doy[ash.L.m2.dayS$Removal == "C"],
-       ash.L.m2.dayS$mean[ash.L.m2.dayS$Removal == "C"]+ash.L.m2.dayS$se[ash.L.m2.dayS$Removal == "C"],
+       ash.L.m2.dayS$L.m2.day[ash.L.m2.dayS$Removal == "C"]+ash.L.m2.dayS$se.m2[ash.L.m2.dayS$Removal == "C"],
        code=0, lwd=ln.w, 
        col=pt.cols[1])
 
 points(ash.L.m2.dayS$doy[ash.L.m2.dayS$Removal == "R"],
-       ash.L.m2.dayS$mean[ash.L.m2.dayS$Removal == "R"],
+       ash.L.m2.dayS$L.m2.day[ash.L.m2.dayS$Removal == "R"],
        pch=19, col=pt.cols[2],
        type="b", cex=pt.c, lwd=ln.w)
 arrows(ash.L.m2.dayS$doy[ash.L.m2.dayS$Removal == "R"],
-       ash.L.m2.dayS$mean[ash.L.m2.dayS$Removal == "R"]-ash.L.m2.dayS$se[ash.L.m2.dayS$Removal == "R"] ,
+       ash.L.m2.dayS$L.m2.day[ash.L.m2.dayS$Removal == "R"]-ash.L.m2.dayS$se.m2[ash.L.m2.dayS$Removal == "R"] ,
        ash.L.m2.dayS$doy[ash.L.m2.dayS$Removal == "R"],
-       ash.L.m2.dayS$mean[ash.L.m2.dayS$Removal == "R"]+ash.L.m2.dayS$se[ash.L.m2.dayS$Removal == "R"],
+       ash.L.m2.dayS$L.m2.day[ash.L.m2.dayS$Removal == "R"]+ash.L.m2.dayS$se.m2[ash.L.m2.dayS$Removal == "R"],
        code=0, lwd=ln.w, 
        col=pt.cols[2])
 
 points(buckthorn.L.m2.dayS$doy,
-       buckthorn.L.m2.dayS$mean,
+       buckthorn.L.m2.dayS$L.m2.day,
        pch=19, col=pt.cols[3],
-       type="b", cex=pt.c, lwd=ln.w)
+       type="p", cex=pt.c, lwd=ln.w)
 
 arrows(buckthorn.L.m2.dayS$doy,
-       buckthorn.L.m2.dayS$mean-buckthorn.L.m2.dayS$se,
+       buckthorn.L.m2.dayS$L.m2.day-buckthorn.L.m2.dayS$se.m2,
        buckthorn.L.m2.dayS$doy,
-       buckthorn.L.m2.dayS$mean+buckthorn.L.m2.dayS$se,
+       buckthorn.L.m2.dayS$L.m2.day+buckthorn.L.m2.dayS$se.m2,
        code=0, lwd=ln.w, 
        col=pt.cols[3])
 
@@ -279,18 +302,24 @@ dev.off()
 #### leaf area allometry ----
 
 buckthorn.SLA <- mean(buckthornSLA$area.cm2/buckthornSLA$weight.g)
-#LA (m2) = -66.185 +  6.579*DBH in cm
-ash.tree$LA.m2 <- -66.185 +  6.579*ash.tree$DBH.cm
-plot(seq(1,60), -66.185 +  (6.579*seq(1,60))) 
+
+
 
 #estimate leaf area in m2
-buckthorn.tree$LA.m2 <- exp(-1.058 + (1.828*log(buckthorn.tree$DBH.cm)))
-plot(seq(1,65), exp(-1.058 + (1.828*log(seq(1,65)))) )
+
 buckthornRemoval <- buckthornRemove[grepl("Removal",buckthornRemove$Plot..Control.Removal.Neither.) == TRUE,]
 
 # Mascaro and Schnitzer have a calculation from data that includes larger trees
 # smaller trees have similar values to our allometry
-buckthornRemoval$LAft.M2 <- (((((0.0287 *buckthornRemoval$DBH..cm.^1.6046)))*1000)*buckthorn.SLA)*0.0001
+
+
+buckthorn.SLA.m2kg <- (buckthorn.SLA*1000)*(1/100)*(1/100)
+
+
+# use Mascaro allometry
+
+#estimate leaf area in m2
+buckthornRemoval$LAft.M2 <- (0.0287 * buckthornRemoval$DBH..cm. ^1.6046)*buckthorn.SLA.m2kg
 
 
 #is 60 cm tree valid? Double check with Aaron and students
@@ -301,11 +330,6 @@ histL <- hist(buckthornRemovals$LAft.M2, breaks=seq(0,240,by=3))
 sum(buckthornRemovals$LAft.M2)
 
 #exclude LA from large tree because unsure
-
-mean(buckthorn.L.m2.day$mean)
-mean(buckthorn.L.m2.day$mean)*sum(buckthornRemovals$LAft.M2)
-
-range(buckthornRemovals$LAft.M2)
 
 
 png(paste0(outDir,"/leaf_area.png"), width = 8, height = 7, units = "in", res=300)
