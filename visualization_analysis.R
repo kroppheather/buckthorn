@@ -236,9 +236,11 @@ dev.off()
 
 
 
-png(paste0(outDir,"/Tday.png"), width = 20, height = 7, units = "in", res=300)
+png(paste0(outDir,"/Tday.png"), width = 15, height = 8, units = "in", res=300)
+
+
 par(mai=c(1.5,3,0.5,0.5))
-plot(c(0,0), c(0,0), ylim=c(0,0.5),
+plot(c(0,0), c(0,0), ylim=c(0,0.35),
      xlim=c(190,270),
      axes=FALSE, xlab=" ",
      ylab= " ", xaxs = "i", yaxs="i")
@@ -361,9 +363,14 @@ dev.off()
 ##############################
 #### soil moisture       ----
 
+hd <- 5
+wd <- 10
 
+png(paste0(outDir,"/soil_micro.png"), width = 10, 
+    height = 10, units = "in", res=300)
+layout(matrix(c(1,2), ncol=1), width=lcm(rep(wd*2.54,1)),
+       height=lcm(rep(c(hd)*2.54,2)))
 
-png(paste0(outDir,"/soil_moist.png"), width = 20, height = 7, units = "in", res=300)
 par(mai=c(1.5,3,0.5,0.5))
 plot(c(0,0), c(0,0), ylim=c(0.3,0.6),
      xlim=c(190,270),
@@ -404,12 +411,6 @@ mtext(expression(paste("Soil moisture ")), side=2, line=9, cex=llc)
 mtext(expression(paste("(m"^"3","m"^"-3",")")), side=2, line=6, cex=llc)
 mtext("Day of year", side=1, line=6, cex=llc)
 
-dev.off()
-
-##############################
-#### soil temperature       ----
-
-png(paste0(outDir,"/soil_temperature.png"), width = 20, height = 7, units = "in", res=300)
 par(mai=c(1.5,3,0.5,0.5))
 plot(c(0,0), c(0,0), ylim=c(15,25),
      xlim=c(190,270),
@@ -450,8 +451,8 @@ mtext(expression(paste("Soil temperature ")), side=2, line=9, cex=llc)
 mtext(expression(paste("(",degree,"C)")), side=2, line=6, cex=llc)
 mtext("Day of year", side=1, line=4, cex=llc)
 
-dev.off()
 
+dev.off()
 
 
 

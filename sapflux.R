@@ -29,7 +29,7 @@
 library(lubridate)
 library(ggplot2)
 library(dplyr)
-
+library(zoo)
 
 ##############################
 #### data directory #### ----
@@ -352,9 +352,9 @@ treeBDir <- treeBDir %>%
 azimB.rel <- lm(treeBDir$veloS ~ treeBDir$veloN)
  summary(azimB.rel)
  
-plot(treeBDir$veloN, treeBDir$veloS)
-abline(azimB.rel)
-abline(0,1, col="red")
+#plot(treeBDir$veloN, treeBDir$veloS)
+#abline(azimB.rel)
+#abline(0,1, col="red")
 
 
 #regression has  a lot of noise 
@@ -533,7 +533,7 @@ ash_TreeL <- list()
 ash_gapZ <- list()
 ash_gap <- list()
 ash_gapDF <- list()
-for(i in 1:length(TreeA)){
+for(i in 1:length(sensorA)){
   ash_TreeL[[i]] <- ashALL %>% filter(sensor == sensorA[i])
   ash_gapZ[[i]] <- zoo(ash_TreeL[[i]]$Flow.L.m2.s, ash_TreeL[[i]]$date)
   ash_gap[[i]] <- na.approx(ash_gapZ[[i]], maxgap=3, na.rm=FALSE) 
