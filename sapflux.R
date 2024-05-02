@@ -471,6 +471,83 @@ ash.treeNN <- ash.tree %>%
 buckthorn.treeNN <- buckthorn.tree %>%
   filter(is.na(Flow.L.s)==FALSE)
 
+# gap fill for daily calculations
+
+# make sure that days with too much missing data aren't included
+
+buckthorn.Check <- buckthorn.treeNN %>%
+  group_by(doy, TreeID) %>%
+  summarise(n_tree = length(Flow.L.s)) %>%
+  filter(n_tree >= 19)
+
+ash.Check <- ash.treeNN %>%
+  group_by(doy, TreeID) %>%
+  summarise(n_tree = length(Flow.L.s)) %>%
+  filter(n_tree >= 19)
+
+
+doyAllAsh <- data.frame(doy=rep(rep(seq(192,266), each=24),times=length(unique(ash.treeNN$sensor))),
+                     hour=rep(rep(seq(0,23), times= length(seq(192,266))),times=length(unique(ash.treeNN$sensor))),
+                     sensor= rep(unique(ash.treeNN$sensor),each=length(seq(192,266))*24))
+
+doyAllBuckthorn <- data.frame(doy=rep(rep(seq(192,266), each=24),times=length(unique(buckthorn.treeNN$sensor))),
+                              hour=rep(rep(seq(0,23), times= length(seq(192,266))),times=length(unique(buckthorn.treeNN$sensor))),
+                              sensor= rep(unique(buckthorn.treeNN$sensor),each=length(seq(192,266))*24))
+
+buckthornALL <- left_join(doyAllBuckthorn, buckthorn.treeNN,  by=c("doy","hour", "sensor"))
+
+ashALL <- left_join(doyAllAsh,ash.treeNN,  by=c("doy","hour", "sensor"))
+
+
+buckthornALL$date <- ymd_hm(paste0(as.Date(buckthornALL$doy, origin="2020-12-31"),
+                                " ", buckthornALL$hour,":00"))
+
+ashALL$date <- ymd_hm(paste0(as.Date(ashALL$doy, origin="2020-12-31"),
+                                       " ", ashALL$hour,":00"))
+
+sensorB <- unique(buckthornALL$sensor)
+buck_TreeL <- list()
+buckthorn_gapZ <- list()
+buckthorn_gap <- list()
+buck_gapDF <- list()
+for(i in 1:length(sensorB)){
+  buck_TreeL[[i]] <- buckthornALL %>% filter(sensor == sensorB[i])
+  buckthorn_gapZ[[i]] <- zoo(buck_TreeL[[i]]$Flow.L.m2.s, buck_TreeL[[i]]$date)
+  buckthorn_gap[[i]] <- na.approx(buckthorn_gapZ[[i]], maxgap=3, na.rm=FALSE) 
+  buck_gapDF[[i]] <- fortify(buckthorn_gap[[i]])
+  buck_gapDF[[i]]$sensor <- rep(sensorB[i], nrow(buck_gapDF[[i]]))
+
+}
+
+
+buckthorn_gapf <- do.call("rbind", buck_gapDF)
+buckthorn_gapf$doy <- yday(buckthorn_gapf$Index)
+buckthorn_gapf$hour <- hour(buckthorn_gapf$Index)
+names(buckthorn_gapf) <- c("date", "Flow.L.m2.s","sensor","doy","hour")
+Nsensors <- sensors %>% filter(Direction == "N")
+
+buckthorn_gapf <- left_join(buckthorn_gapf, Nsensors, by=c("sensor"= "SensorID"))
+
+sensorA <- unique(ashALL$sensor)
+ash_TreeL <- list()
+ash_gapZ <- list()
+ash_gap <- list()
+ash_gapDF <- list()
+for(i in 1:length(TreeA)){
+  ash_TreeL[[i]] <- ashALL %>% filter(sensor == sensorA[i])
+  ash_gapZ[[i]] <- zoo(ash_TreeL[[i]]$Flow.L.m2.s, ash_TreeL[[i]]$date)
+  ash_gap[[i]] <- na.approx(ash_gapZ[[i]], maxgap=3, na.rm=FALSE) 
+  ash_gapDF[[i]] <- fortify(ash_gap[[i]])
+  ash_gapDF[[i]]$sensor <- rep(sensorA[i], nrow(ash_gapDF[[i]]))
+}
+
+ash_gapf <- do.call("rbind", ash_gapDF)
+ash_gapf$doy <- yday(ash_gapf$Index)
+ash_gapf$hour <- hour(ash_gapf$Index)
+names(ash_gapf) <- c("date", "Flow.L.m2.s","sensor","doy","hour")
+
+
+ash_gapf <- left_join(ash_gapf, Nsensors, by=c("sensor"="SensorID"))
 
 ##############################
 #### Summary tables    ----
@@ -511,28 +588,31 @@ ggplot(ash.hour %>% filter(doy>208 & doy <220), aes(doy + (hour/24), mh.L.m2.s, 
 
 
 #total liters per day used by each tree per day
-ash.L.sens <- ash.treeNN %>%
+ash.L.sens <- ash_gapf %>%
+  filter(is.na(Flow.L.m2.s)== FALSE)%>%
   group_by(doy, Removal, TreeID) %>%
-  summarise(L.day1 = sum(Flow.L.s*60*60 ), # sum up L per hour
-            n.day1=length(Flow.L.s),
+  summarise( 
+            n.day1=length(Flow.L.m2.s),
             L.day1.m2 = sum(Flow.L.m2.s*60*60 )) %>%
-  filter(n.day1 >= 23)
+  filter(n.day1 == 24)
 
-buckthorn.L.sens <- buckthorn.treeNN %>%
+buckthorn.L.sens <-  na.omit(buckthorn_gapf) %>%
   group_by(doy, Removal, TreeID) %>%
-  summarise(L.day1 = sum(Flow.L.s*60*60 ), # sum up L per hour
-            n.day1=length(Flow.L.s),
+  summarise( n.day1=length(Flow.L.m2.s),
             L.day1.m2 = sum(Flow.L.m2.s*60*60 )) %>%
-  filter(n.day1 >= 23)
+  filter(n.day1 == 24)
+
+
   
+
+# gap fill
 
 
 # average daily transpiration by species and plot
 ash.L.day <- ash.L.sens %>%
   group_by(doy, Removal) %>%
-  summarise(L.day = mean(L.day1),
-            n.day = length(L.day1),
-            sd.day = sd(L.day1),
+  summarise(
+            n.day = length(L.day1.m2),
             L.m2.day = mean(L.day1.m2),
             sd.m2.day = sd(L.day1.m2)) %>%
   filter(n.day >=3)
@@ -543,14 +623,13 @@ ggplot(ash.L.day, aes(doy, L.m2.day, color=Removal))+
 
 buckthorn.L.day <- buckthorn.L.sens %>%
   group_by(doy, Removal) %>%
-  summarise(L.day = mean(L.day1),
-            n.day = length(L.day1),
-            sd.day = sd(L.day1),
+  summarise(
+            n.day = length(L.day1.m2),
             L.m2.day = mean(L.day1.m2),
             sd.m2.day = sd(L.day1.m2)) %>%
   filter(n.day >=3)
 
-ggplot(buckthorn.L.day, aes(doy, L.day))+
+ggplot(buckthorn.L.day, aes(doy, L.m2.day))+
   geom_point()+
   geom_line()
 
