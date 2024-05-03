@@ -364,9 +364,9 @@ dev.off()
 #### soil moisture       ----
 
 hd <- 5
-wd <- 10
+wd <- 12
 
-png(paste0(outDir,"/soil_micro.png"), width = 10, 
+png(paste0(outDir,"/soil_micro.png"), width = 12, 
     height = 10, units = "in", res=300)
 layout(matrix(c(1,2), ncol=1), width=lcm(rep(wd*2.54,1)),
        height=lcm(rep(c(hd)*2.54,2)))
