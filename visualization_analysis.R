@@ -372,7 +372,7 @@ layout(matrix(c(1,2), ncol=1), width=lcm(rep(wd*2.54,1)),
        height=lcm(rep(c(hd)*2.54,2)))
 
 par(mai=c(1.5,3,0.5,0.5))
-plot(c(0,0), c(0,0), ylim=c(0.3,0.6),
+plot(c(0,0), c(0,0), ylim=c(0.2,0.6),
      xlim=c(190,270),
      axes=FALSE, xlab=" ",
      ylab= " ", xaxs = "i", yaxs="i")
@@ -404,15 +404,16 @@ legend("topright",
         lwd=ln.w,
        cex=lg.c, pt.cex=pt.c, bty="n", horiz=TRUE)
 axis(1, seq(190,270, by=10), rep(" ", length(seq(190,270, by=10))), cex.axis=ax.c, lwd.ticks=tlw)
-axis(2, seq(0.3,0.5, by=0.1), rep(" ", length(seq(0.3,0.5, by=0.1))), las=2, cex.axis=ax.c, lwd.ticks=tlw)
+axis(2, seq(0.2,0.5, by=0.1), rep(" ", length(seq(0.2,0.5, by=0.1))), las=2, cex.axis=ax.c, lwd.ticks=tlw)
 mtext( seq(190,270, by=10), at= seq(190,270, by=10), side=1, line=2, cex=alc)
-mtext( seq(0.3,0.5, by=0.1), at= seq(0.3,0.5, by=0.1), side=2, line=2, cex=alc, las=2)
+mtext( seq(0.2,0.5, by=0.1), at= seq(0.2,0.5, by=0.1), side=2, line=2, cex=alc, las=2)
 mtext(expression(paste("Soil moisture ")), side=2, line=9, cex=llc)
 mtext(expression(paste("(m"^"3","m"^"-3",")")), side=2, line=6, cex=llc)
 mtext("Day of year", side=1, line=6, cex=llc)
+text(192, 0.5, "a", cex=1.5)
 
 par(mai=c(1.5,3,0.5,0.5))
-plot(c(0,0), c(0,0), ylim=c(15,25),
+plot(c(0,0), c(0,0), ylim=c(15,28),
      xlim=c(190,270),
      axes=FALSE, xlab=" ",
      ylab= " ", xaxs = "i", yaxs="i")
@@ -450,7 +451,7 @@ mtext( seq(15,25, by=2), at= seq(15,25, by=2), side=2, line=2, cex=alc, las=2)
 mtext(expression(paste("Soil temperature ")), side=2, line=9, cex=llc)
 mtext(expression(paste("(",degree,"C)")), side=2, line=6, cex=llc)
 mtext("Day of year", side=1, line=4, cex=llc)
-
+text(192, 24.5, "b", cex=1.5)
 
 dev.off()
 
