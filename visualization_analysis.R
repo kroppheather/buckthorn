@@ -469,33 +469,3 @@ t.test(moistD, mu=0)
 #positive difference = removal has less moisture than control
 
 
-
-##############################
-#### flow per unit leaf ----
-
-ash.Fsub <- ash.Flow.m2[ash.Flow.m2$doy >= 229 &ash.Flow.m2$doy <= 240, ]
-ash.Fsub$ml.m2.s <- ash.Fsub$mean *1000
-
-range(ash.Flow.m2$mean)*1000
-range(buckthorn.Flow.m2$mean)
-
-plot(ash.Fsub$DD[ash.Fsub$Removal == "C"],
-     ash.Fsub$ml.m2.s[ash.Fsub$Removal == "C"],
-     pch=19, col=rgb(0,114,178,155,maxColorValue=255), type="b",
-     ylim=c(0,0.01))
-points(ash.Fsub$DD[ash.Fsub$Removal == "R"],
-       ash.Fsub$ml.m2.s[ash.Fsub$Removal == "R"],
-       pch=19, col=rgb(213,94,0,155,maxColorValue=255), type="b")
-
-##############################
-#### met with flow per unit leaf ----
-
-meterSub <- na.omit(meterTable[meterTable$doy  >= 170 & meterTable$doy <= 270 & meterTable$year == 2021, ])
-
-plot(meterSub$DD, meterSub$SolRad,
-     pch=19, col=rgb(0,114,178,155,maxColorValue=255), type="b")
-plot(meterSub$DD, meterSub$VPD,
-     pch=19, col=rgb(0,114,178,155,maxColorValue=255), type="b")
-
-plot(meterSub$DD, meterSub$Precip,
-     pch=19, col=rgb(0,114,178,155,maxColorValue=255), type="b")
