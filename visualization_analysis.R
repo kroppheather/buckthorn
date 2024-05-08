@@ -75,7 +75,7 @@ ggplot(Tday, aes(doy, L.m2.day, color=expID))+
   geom_point()+
   geom_line()
 
-ggplot(Tday, aes(maxVPD, L.m2.day, color=expID))+
+ggplot(Tday, aes(log(maxVPD), L.m2.day, color=expID))+
   geom_point()
 
 ggplot(Tday %>% filter(species == "Ash"), aes(log(maxVPD), L.m2.day, color=expID))+
@@ -94,6 +94,9 @@ summary(lmAR)
 plot(Tday$maxVPD[Tday$Removal == "R" & Tday$species == "Ash"],lmAC$residuals)
 qqnorm(lmAR$residuals)
 qqline(lmAR$residuals)
+
+lmBC <- lm(Tday$L.m2.day[Tday$Removal == "C" & Tday$species == "Buckthorn"] ~ log(Tday$maxVPD[Tday$Removal == "C" & Tday$species == "Buckthorn"]))
+summary(lmBC)
 
 # removal completed by 181 doy
 
@@ -469,3 +472,63 @@ t.test(moistD, mu=0)
 #positive difference = removal has less moisture than control
 
 
+
+##############################
+#### daily T & VPD      ----
+
+summary(lmAC)
+
+
+lmAR <- lm(Tday$L.m2.day[Tday$Removal == "R" & Tday$species == "Ash"] ~ log(Tday$maxVPD[Tday$Removal == "R" & Tday$species == "Ash"]))
+summary(lmAR)
+plot(Tday$L.m2.day[Tday$Removal == "R" & Tday$species == "Ash"])
+
+png(paste0(outDir,"/Tday_VPD.png"), width = 15, height = 15, units = "in", res=300)
+
+
+par(mai=c(3,3,3,3))
+plot(c(0,0), c(0,0), ylim=c(0,0.35), type="n",
+     xlim=c(-0.6,0.8),
+     axes=FALSE, xlab=" ",
+     ylab= " ", xaxs = "i", yaxs="i")
+
+points(log(ash.L.m2.dayS$maxVPD[ash.L.m2.dayS$Removal == "C"]),
+       ash.L.m2.dayS$L.m2.day[ash.L.m2.dayS$Removal == "C"],
+       pch=19, col=pt.cols[1],
+       type="p", cex=1.5, lwd=ln.w)
+abline(lmAC, col=pt.cols[1], lwd=2)
+
+points(log(ash.L.m2.dayS$maxVPD[ash.L.m2.dayS$Removal == "R"]),
+       ash.L.m2.dayS$L.m2.day[ash.L.m2.dayS$Removal == "R"],
+       pch=19, col=pt.cols[2],
+       type="p", cex=1.5, lwd=ln.w)
+abline(lmAR, col=pt.cols[2], lwd=2)
+
+points(log(buckthorn.L.m2.dayS$maxVPD[buckthorn.L.m2.dayS$Removal == "C"]),
+       buckthorn.L.m2.dayS$L.m2.day[buckthorn.L.m2.dayS$Removal == "C"],
+       pch=19, col=pt.cols[3],
+       type="p", cex=1.5, lwd=ln.w)
+abline(lmBC, col=pt.cols[3], lwd=2)
+
+legend("topright",
+       c("Ash control",
+         "Ash removal",
+         "Buckthorn control"),
+       col=pt.cols,
+       pch=19, 
+       cex=lg.c, pt.cex=pt.c, bty="n")
+
+
+axis(1, seq(-0.6,1, by=.2), rep(" ", length(seq(-0.6,1, by=.2))), cex.axis=ax.c, lwd.ticks=tlw)
+axis(2, seq(0,0.3, by=0.1), rep(" ", length(seq(0,0.3, by=0.1))), las=2, cex.axis=ax.c, lwd.ticks=tlw)
+mtext(c(-0.6,-0.4,-0.2,0,0.2,0.4,0.6,0.8), at= c(-0.6,-0.4,-0.2,0,0.2,0.4,0.6,0.8), side=1, line=2, cex=alc)
+mtext( seq(0,0.3, by=0.1), at= seq(0,0.3, by=0.1), side=2, line=2, cex=alc, las=2)
+mtext(expression(paste("Canopy transpiration ")), side=2, line=9, cex=llc)
+mtext(expression(paste("(L m"^"-2","day"^"-1",")")), side=2, line=6, cex=llc)
+mtext("Log-scale vapor pressure deficit (log(KPa))", side=1, line=4, cex=llc)
+
+dev.off()
+
+summary(lmAC)
+summary(lmAR)
+summary(lmBC)
