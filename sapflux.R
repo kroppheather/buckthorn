@@ -105,9 +105,9 @@ bsap.calc <- mean( buckthornSW$Sapwood.mm/10)
 
 
 #dbh vs bark thickness
-# plot(buckthornSW$DBH.cm, buckthornSW$bark.mm, pch=19)
-# bbark.lm <- lm(buckthornSW$bark.mm/10 ~ buckthornSW$DBH.cm )
-# summary(bbark.lm)
+ plot(buckthornSW$DBH.cm, buckthornSW$bark.mm, pch=19)
+ bbark.lm <- lm(buckthornSW$bark.mm/10 ~ buckthornSW$DBH.cm )
+ summary(bbark.lm)
 # bark relationship not significant
 # assume mean
 bbark.calc <- mean( buckthornSW$bark.mm/10)
@@ -375,22 +375,24 @@ buckthorn.tree <- buckthorn %>%
 ##############################
 #### canopy leaf allometry   ----
 
-
+greenwood <- na.omit(cbind(greenwood[,1], greenwood[,3:5]))
 #Ash allometry from literature
 greenwood$sap.area <- greenwood$Sapwood.Volume..ft.3./greenwood$Total.Height..feet
 #30.48 cm in 1 foot
 greenwood$sap.area.cm <- 30.48*30.48*greenwood$sap.area 
 greenwood$dbh.cm <- (greenwood$DBH..inches.*2.54)
-greenwood$treeArea <- ((greenwood$dbh.cm /2)^2)*pi
-
-#plot(greenwood$dbh.cm,greenwood$sap.area.cm)
-
-#saparea.reg <- lm(greenwood$sap.area.cm ~ greenwood$dbh.cm)
-#summary(saparea.reg)
 
 
-#sap cm2 = -9.6 + 8.854*DBH cm
+plot(log(greenwood$dbh.cm),log(greenwood$sap.area.cm))
+saparea.reg <- lm(log(greenwood$sap.area.cm) ~ log(greenwood$dbh.cm))
+summary(saparea.reg)
+abline(saparea.reg)
+shapiro.test(saparea.reg$residuals)
+qqnorm(saparea.reg$residuals)
+qqline(saparea.reg$residuals)
+plot(log(greenwood$dbh.cm), saparea.reg$residuals)
 
+# log(sap cm2) = 0.7866 + 1.34 * log(DBH)
 
 ##############################
 #### Canopy calculations   ----
@@ -398,7 +400,7 @@ greenwood$treeArea <- ((greenwood$dbh.cm /2)^2)*pi
 ## sapwood arrea
 
 # ash tree
-ash.tree$sap.areacm2 <- -9.6 + 8.854*ash.tree$DBH.cm
+ash.tree$sap.areacm2 <-  exp(0.7866 + 1.34 * log(ash.tree$DBH.cm))
 #convert sap area to m2
 ash.tree$sap.aream2 <- 0.0001*ash.tree$sap.areacm2
 
