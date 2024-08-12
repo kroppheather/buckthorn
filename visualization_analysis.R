@@ -335,8 +335,11 @@ histL <- hist(buckthornRemovals$LAft.M2, breaks=seq(0,240,by=3))
 sum(buckthornRemovals$LAft.M2)
 
 #exclude LA from large tree because unsure
+range(Tday$L.m2.day[Tday$Removal == "C" & Tday$species == "Buckthorn"])
+mean(Tday$L.m2.day[Tday$Removal == "C" & Tday$species == "Buckthorn"])
 
-
+(mean(Tday$L.m2.day[Tday$Removal == "C" & Tday$species == "Buckthorn"])*sum(buckthornRemovals$LAft.M2))
+(mean(Tday$L.m2.day[Tday$Removal == "C" & Tday$species == "Buckthorn"])*sum(buckthornRemovals$LAft.M2))/(65*12.5)
 png(paste0(outDir,"/leaf_area.png"), width = 8, height = 7, units = "in", res=300)
 par(mai=c(1.5,1.5,0.5,0.5))
 
@@ -481,6 +484,7 @@ plot(test$estD, moistD, type="l")
 
 summary(lmAC)
 qqnorm(lmAC$residuals)
+summary(lmBC)
 
 plot(log(Tday$maxVPD[Tday$Removal == "C" & Tday$species == "Ash"]),lmAC$residuals)
 
@@ -554,14 +558,31 @@ TdayS <- inner_join(Tday, SMdaily, by=c("doy","Removal"))
 ggplot(TdayS, aes(SM, L.m2.day, size=species, color=Removal))+
   geom_point()
 
-plot(TdayS$SM[Tday$Removal == "R"&Tday$species == "Ash"],
-     TdayS$L.m2.day[Tday$Removal == "R"&Tday$species == "Ash"])
+plot(TdayS$SM[TdayS$Removal == "R"&TdayS$species == "Ash"],
+     TdayS$L.m2.day[TdayS$Removal == "R"&TdayS$species == "Ash"])
 
-plot(TdayS$SM[Tday$Removal == "C"&Tday$species == "Ash"],
-     TdayS$L.m2.day[Tday$Removal == "C"&Tday$species == "Ash"])
-lmSC <- lm(TdayS$L.m2.day[Tday$Removal == "C"&Tday$species == "Ash"] ~ TdayS$SM[Tday$Removal == "C"&Tday$species == "Ash"])
+plot(TdayS$SM[TdayS$Removal == "C"&TdayS$species == "Buckthorn"],
+     TdayS$L.m2.day[TdayS$Removal == "C"&TdayS$species == "Buckthorn"])
+
+plot(TdayS$SM[TdayS$Removal == "C"&TdayS$species == "Ash"],
+     TdayS$L.m2.day[TdayS$Removal == "C"&TdayS$species == "Ash"])
+lmSC <- lm(TdayS$L.m2.day[TdayS$Removal == "C"&TdayS$species == "Ash"] ~ TdayS$SM[TdayS$Removal == "C"&TdayS$species == "Ash"])
 summary(lmSC)
 qqnorm(lmSC$residuals)
+plot(TdayS$SM[TdayS$Removal == "C"&TdayS$species == "Ash"],lmSC$residuals)
+
+lmSR <- lm(TdayS$L.m2.day[TdayS$Removal == "R"&TdayS$species == "Ash"] ~ TdayS$SM[TdayS$Removal == "R"&TdayS$species == "Ash"])
+summary(lmSR)
+qqnorm(lmSR$residuals)
+qqline(lmSR$residuals)
+plot(TdayS$SM[TdayS$Removal == "R"&TdayS$species == "Ash"],lmSR$residuals)
+
+
+lmSB <- lm(TdayS$L.m2.day[TdayS$Removal == "C"&TdayS$species == "Buckthorn"] ~ TdayS$SM[TdayS$Removal == "C"&TdayS$species == "Buckthorn"])
+summary(lmSB)
+qqnorm(lmSB$residuals)
+qqline(lmSB$residuals)
+plot(TdayS$SM[TdayS$Removal == "C"&TdayS$species == "Buckthorn"],lmSB$residuals)
 
 # look at difference in T on paired days
 TdayR <- data.frame(doy=Tday$doy[Tday$Removal == "R"&Tday$species == "Ash"],
