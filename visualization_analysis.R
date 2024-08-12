@@ -375,8 +375,8 @@ layout(matrix(c(1,2), ncol=1), width=lcm(rep(wd*2.54,1)),
        height=lcm(rep(c(hd)*2.54,2)))
 
 par(mai=c(1.5,3,0.5,0.5))
-plot(c(0,0), c(0,0), ylim=c(0.2,0.6),
-     xlim=c(190,270),
+plot(c(0,0), c(0,0), ylim=c(0.2,0.67),
+     xlim=c(190,255),
      axes=FALSE, xlab=" ",
      ylab= " ", xaxs = "i", yaxs="i")
 
@@ -406,23 +406,23 @@ legend("topright",
        col=pt.cols[1:2],
         lwd=ln.w,
        cex=lg.c, pt.cex=pt.c, bty="n", horiz=TRUE)
-axis(1, seq(190,270, by=10), rep(" ", length(seq(190,270, by=10))), cex.axis=ax.c, lwd.ticks=tlw)
-axis(2, seq(0.2,0.5, by=0.1), rep(" ", length(seq(0.2,0.5, by=0.1))), las=2, cex.axis=ax.c, lwd.ticks=tlw)
-mtext( seq(190,270, by=10), at= seq(190,270, by=10), side=1, line=2, cex=alc)
-mtext( seq(0.2,0.5, by=0.1), at= seq(0.2,0.5, by=0.1), side=2, line=2, cex=alc, las=2)
+axis(1, seq(190,260, by=10), rep(" ", length(seq(190,260, by=10))), cex.axis=ax.c, lwd.ticks=tlw)
+axis(2, seq(0.2,0.6, by=0.1), rep(" ", length(seq(0.2,0.6, by=0.1))), las=2, cex.axis=ax.c, lwd.ticks=tlw)
+mtext( seq(190,250, by=10), at= seq(190,250, by=10), side=1, line=2, cex=alc)
+mtext( seq(0.2,0.6, by=0.1), at= seq(0.2,0.6, by=0.1), side=2, line=2, cex=alc, las=2)
 mtext(expression(paste("Soil moisture ")), side=2, line=9, cex=llc)
 mtext(expression(paste("(m"^"3","m"^"-3",")")), side=2, line=6, cex=llc)
 mtext("Day of year", side=1, line=6, cex=llc)
-text(192, 0.5, "a", cex=1.5)
+text(192, 0.6, "a", cex=1.5)
 
 par(mai=c(1.5,3,0.5,0.5))
 plot(c(0,0), c(0,0), ylim=c(15,28),
-     xlim=c(190,270),
+     xlim=c(190,255),
      axes=FALSE, xlab=" ",
      ylab= " ", xaxs = "i", yaxs="i")
 
 points(TMSsub$DD[TMSsub$location == "control" & TMSsub$estD <= "2021-07-16 11:15:00"],
-       TMSsub$Tm6[TMSsub$location == "control"& TMSsub$estD <= "2021-07-16 11:15:00"],
+       TMSsub$Tm6[TMSsub$location == "control" & TMSsub$estD <= "2021-07-16 11:15:00"],
        pch=19, col=pt.cols[1],
        type="l", lwd=lln.w)
 
@@ -447,9 +447,9 @@ legend("topright",
        col=pt.cols[1:2],
        lwd=ln.w,
        cex=lg.c, pt.cex=pt.c, bty="n", horiz=TRUE)
-axis(1, seq(190,270, by=10), rep(" ", length(seq(190,270, by=10))), cex.axis=ax.c, lwd.ticks=tlw)
+axis(1, seq(190,260, by=10), rep(" ", length(seq(190,260, by=10))), cex.axis=ax.c, lwd.ticks=tlw)
 axis(2, seq(15,25, by=2), rep(" ", length(seq(15,25, by=2))), las=2, cex.axis=ax.c, lwd.ticks=tlw)
-mtext( seq(190,270, by=10), at= seq(190,270, by=10), side=1, line=2, cex=alc)
+mtext( seq(190,250, by=10), at= seq(190,250, by=10), side=1, line=2, cex=alc)
 mtext( seq(15,25, by=2), at= seq(15,25, by=2), side=2, line=2, cex=alc, las=2)
 mtext(expression(paste("Soil temperature ")), side=2, line=9, cex=llc)
 mtext(expression(paste("(",degree,"C)")), side=2, line=6, cex=llc)
@@ -470,17 +470,24 @@ t.test(tempD, mu=0)
 moistD <- test$SM.cor.x - test$SM.cor.y
 t.test(moistD, mu=0)
 #positive difference = removal has less moisture than control
-
-
+test$tempD <- tempD
+plot(test$estD, tempD, type="l")
+range(tempD)
+test$moistD <- moistD
+plot(test$estD, moistD, type="l")
 
 ##############################
 #### daily T & VPD      ----
 
 summary(lmAC)
+qqnorm(lmAC$residuals)
 
+plot(log(Tday$maxVPD[Tday$Removal == "C" & Tday$species == "Ash"]),lmAC$residuals)
 
 lmAR <- lm(Tday$L.m2.day[Tday$Removal == "R" & Tday$species == "Ash"] ~ log(Tday$maxVPD[Tday$Removal == "R" & Tday$species == "Ash"]))
 summary(lmAR)
+qqnorm(lmAR$residuals)
+plot(log(Tday$maxVPD[Tday$Removal == "R" & Tday$species == "Ash"]),lmAR$residuals)
 plot(Tday$L.m2.day[Tday$Removal == "R" & Tday$species == "Ash"])
 
 png(paste0(outDir,"/Tday_VPD.png"), width = 15, height = 15, units = "in", res=300)
@@ -532,3 +539,40 @@ dev.off()
 summary(lmAC)
 summary(lmAR)
 summary(lmBC)
+
+# look at daily soil moisture and T
+
+SMdaily <- TMSsub %>%
+  group_by(doy, location) %>%
+  summarise(SM=mean(SM.cor))
+SMdaily$Removal <- ifelse(SMdaily$location == "removal", "R",
+                          ifelse(SMdaily$location == "control","C","O"))
+SMdaily <- SMdaily %>%
+  filter(Removal != "O")
+
+TdayS <- inner_join(Tday, SMdaily, by=c("doy","Removal"))
+ggplot(TdayS, aes(SM, L.m2.day, size=species, color=Removal))+
+  geom_point()
+
+plot(TdayS$SM[Tday$Removal == "R"&Tday$species == "Ash"],
+     TdayS$L.m2.day[Tday$Removal == "R"&Tday$species == "Ash"])
+
+plot(TdayS$SM[Tday$Removal == "C"&Tday$species == "Ash"],
+     TdayS$L.m2.day[Tday$Removal == "C"&Tday$species == "Ash"])
+lmSC <- lm(TdayS$L.m2.day[Tday$Removal == "C"&Tday$species == "Ash"] ~ TdayS$SM[Tday$Removal == "C"&Tday$species == "Ash"])
+summary(lmSC)
+qqnorm(lmSC$residuals)
+
+# look at difference in T on paired days
+TdayR <- data.frame(doy=Tday$doy[Tday$Removal == "R"&Tday$species == "Ash"],
+                    L.m2.dayR = Tday$L.m2.day[Tday$Removal == "R"&Tday$species == "Ash"])
+
+TdayC <- data.frame(doy=Tday$doy[Tday$Removal == "C"&Tday$species == "Ash"],
+                    L.m2.dayC = Tday$L.m2.day[Tday$Removal == "C"&Tday$species == "Ash"])
+
+TdayComp <- inner_join(TdayR, TdayC, by="doy")
+TdayComp$Tdiff <- TdayComp$L.m2.dayC - TdayComp$L.m2.dayR
+plot(TdayComp$doy, TdayComp$Tdiff, type="b")
+t.test(TdayComp$Tdiff, mu=0)
+
+plot(TdayComp$doy, TdayComp$Tdiff)

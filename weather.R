@@ -192,9 +192,10 @@ removal$location <- rep("removal",nrow(removal))
 control$location <- rep("control",nrow(control))
 
 # loam calculation
-weather$SM.cor <- (-0.00000005*(weather$SM^2)) + (0.000398*weather$SM) -0.291
-removal$SM.cor <- (-0.00000005*(removal$SM^2)) + (0.000398*removal$SM) -0.291
-control$SM.cor <- (-0.00000005*(control$SM^2)) + (0.000398*control$SM) -0.291
+
+weather$SM.cor <- (-0.00000002*(weather$SM^2)) + (0.0003*weather$SM) -0.2062
+removal$SM.cor <- (-0.00000002*(removal$SM^2)) + (0.0003*removal$SM) -0.2062
+control$SM.cor <- (-0.00000002*(control$SM^2)) + (0.0003*control$SM) -0.2062
 
 
 TMSbind <- rbind(weather,removal,control)
