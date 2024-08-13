@@ -489,9 +489,6 @@ plot(log(Tday$maxVPD[Tday$Removal == "C" & Tday$species == "Buckthorn"]),lmBC$re
 
 
 
-summary(lmAC)
-summary(lmAR)
-summary(lmBC)
 
 # look at daily soil moisture and T
 
@@ -503,13 +500,15 @@ SMdaily$Removal <- ifelse(SMdaily$location == "removal", "R",
 SMdaily <- SMdaily %>%
   filter(Removal != "O")
 
-lmSC <- lm(TdayS$L.m2.day[TdayS$Removal == "C"&TdayS$species == "Ash"] ~ TdayS$SM[TdayS$Removal == "C"&TdayS$species == "Ash"])
+TdayS$SMcc <- TdayS$SM-0.35
+
+lmSC <- lm(TdayS$L.m2.day[TdayS$Removal == "C"&TdayS$species == "Ash"] ~ TdayS$SMcc[TdayS$Removal == "C"&TdayS$species == "Ash"])
 summary(lmSC)
 qqnorm(lmSC$residuals)
 qqline(lmSC$residuals)
 plot(TdayS$SM[TdayS$Removal == "C"&TdayS$species == "Ash"],lmSC$residuals)
 
-lmSR <- lm(TdayS$L.m2.day[TdayS$Removal == "R"&TdayS$species == "Ash"] ~ TdayS$SM[TdayS$Removal == "R"&TdayS$species == "Ash"])
+lmSR <- lm(TdayS$L.m2.day[TdayS$Removal == "R"&TdayS$species == "Ash"] ~ TdayS$SMcc[TdayS$Removal == "R"&TdayS$species == "Ash"])
 summary(lmSR)
 qqnorm(lmSR$residuals)
 qqline(lmSR$residuals)
@@ -517,23 +516,21 @@ plot(TdayS$SM[TdayS$Removal == "R"&TdayS$species == "Ash"],lmSR$residuals)
 
 
 
-lmSB <- lm(TdayS$L.m2.day[TdayS$Removal == "C"&TdayS$species == "Buckthorn"] ~ TdayS$SM[TdayS$Removal == "C"&TdayS$species == "Buckthorn"])
+lmSB <- lm(TdayS$L.m2.day[TdayS$Removal == "C"&TdayS$species == "Buckthorn"] ~ TdayS$SMcc[TdayS$Removal == "C"&TdayS$species == "Buckthorn"])
 summary(lmSB)
 qqnorm(lmSB$residuals)
 qqline(lmSB$residuals)
 plot(TdayS$SM[TdayS$Removal == "C"&TdayS$species == "Buckthorn"],lmSB$residuals)
 
-ggplot(TdayS, aes(SM, L.m2.day, color=expID))+
-         geom_point()
+wd <- 5
+hd <- 5
 
+png(paste0(outDir,"/Tday_VPD.png"), width = 15, height = 7, units = "in", res=300)
+layout(matrix(c(1,2), ncol=2), width=lcm(rep(wd*2.54,2)),
+       height=lcm(rep(c(hd)*2.54,1)))
 
-
-
-png(paste0(outDir,"/Tday_VPD.png"), width = 15, height = 15, units = "in", res=300)
-
-
-par(mai=c(3,3,3,3))
-plot(c(0,0), c(0,0), ylim=c(0,0.35), type="n",
+par(mai=c(0.2,0.2,0.2,0.2))
+plot(c(0,0), c(0,0), ylim=c(0,0.3), type="n",
      xlim=c(-0.6,0.8),
      axes=FALSE, xlab=" ",
      ylab= " ", xaxs = "i", yaxs="i")
@@ -556,24 +553,68 @@ points(log(buckthorn.L.m2.dayS$maxVPD[buckthorn.L.m2.dayS$Removal == "C"]),
        type="p", cex=1.5, lwd=ln.w)
 abline(lmBC, col=pt.cols[3], lwd=2)
 
-legend("topright",
+
+
+axis(1, seq(-0.6,1, by=.2), rep(" ", length(seq(-0.6,1, by=.2))), cex.axis=ax.c, lwd.ticks=tlw)
+axis(2, seq(0,0.3, by=0.1), rep(" ", length(seq(0,0.3, by=0.1))), las=2, cex.axis=ax.c, lwd.ticks=tlw)
+mtext(c(-0.6,-0.4,-0.2,0,0.2,0.4,0.6,0.8), at= c(-0.6,-0.4,-0.2,0,0.2,0.4,0.6,0.8), side=1, line=2, cex=1.5)
+mtext( seq(0,0.3, by=0.1), at= seq(0,0.3, by=0.1), side=2, line=2, cex=1.5, las=2)
+mtext(expression(paste("Canopy transpiration ")), side=2, line=8, cex=2)
+mtext(expression(paste("(L m"^"-2","day"^"-1",")")), side=2, line=6, cex=2)
+mtext("Log-scale vapor pressure deficit (log(KPa))", side=1, line=4.5, cex=2)
+text(-0.55, 0.295, "a", cex=1.5)
+
+par(mai=c(0.2,0.2,0.2,0.2))
+plot(c(0,0), c(0,0), ylim=c(0,0.3), type="n",
+     xlim=c(-0.05,0.25),
+     axes=FALSE, xlab=" ",
+     ylab= " ", xaxs = "i", yaxs="i")
+
+points(TdayS$SMcc[TdayS$Removal == "C"&TdayS$species == "Ash"],
+       TdayS$L.m2.day[TdayS$Removal == "C"&TdayS$species == "Ash"],
+       pch=19, col=pt.cols[1],
+       type="p", cex=1.5, lwd=ln.w)
+
+points(TdayS$SMcc[TdayS$Removal == "R"&TdayS$species == "Ash"],
+       TdayS$L.m2.day[TdayS$Removal == "R"&TdayS$species == "Ash"],
+       pch=19, col=pt.cols[2],
+       type="p", cex=1.5, lwd=ln.w)
+
+points(TdayS$SMcc[TdayS$Removal == "C"&TdayS$species == "Buckthorn"],
+       TdayS$L.m2.day[TdayS$Removal == "C"&TdayS$species == "Buckthorn"],
+       pch=19, col=pt.cols[3],
+       type="p", cex=1.5, lwd=ln.w)
+
+
+abline(lmSC, col=pt.cols[1], lwd=2)
+
+
+legend("topleft",
        c("Ash control",
          "Ash removal",
          "Buckthorn control"),
        col=pt.cols,
        pch=19, 
-       cex=lg.c, pt.cex=pt.c, bty="n")
+       cex=1.5, pt.cex=1.5, bty="n")
 
-
-axis(1, seq(-0.6,1, by=.2), rep(" ", length(seq(-0.6,1, by=.2))), cex.axis=ax.c, lwd.ticks=tlw)
+axis(1, seq(-0.05,0.25, by=0.05), rep(" ", length(seq(-0.05,0.25, by=0.05))), cex.axis=ax.c, lwd.ticks=tlw)
+mtext(seq(-0.05,0.25, by=0.05)+0.35, at= seq(-0.05,0.25, by=0.05), side=1, line=2, cex=1.5)
+mtext(expression(paste("Soil moisture (m"^3,"m"^-3,")")), side=1, line=4.5, cex=2)
 axis(2, seq(0,0.3, by=0.1), rep(" ", length(seq(0,0.3, by=0.1))), las=2, cex.axis=ax.c, lwd.ticks=tlw)
-mtext(c(-0.6,-0.4,-0.2,0,0.2,0.4,0.6,0.8), at= c(-0.6,-0.4,-0.2,0,0.2,0.4,0.6,0.8), side=1, line=2, cex=alc)
-mtext( seq(0,0.3, by=0.1), at= seq(0,0.3, by=0.1), side=2, line=2, cex=alc, las=2)
-mtext(expression(paste("Canopy transpiration ")), side=2, line=9, cex=llc)
-mtext(expression(paste("(L m"^"-2","day"^"-1",")")), side=2, line=6, cex=llc)
-mtext("Log-scale vapor pressure deficit (log(KPa))", side=1, line=4, cex=llc)
+text(-0.03, 0.295, "b", cex=1.5)
 
 dev.off()
+
+
+# tables
+summary(lmSB)
+summary(lmSC)
+summary(lmSR)
+
+
+summary(lmAC)
+summary(lmAR)
+summary(lmBC)
 
 
 #### look at difference in T on paired days ----
