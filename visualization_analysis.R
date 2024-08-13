@@ -81,22 +81,6 @@ ggplot(Tday, aes(log(maxVPD), L.m2.day, color=expID))+
 ggplot(Tday %>% filter(species == "Ash"), aes(log(maxVPD), L.m2.day, color=expID))+
   geom_point()
 
-lmAC <- lm(Tday$L.m2.day[Tday$Removal == "C" & Tday$species == "Ash"] ~ log(Tday$maxVPD[Tday$Removal == "C" & Tday$species == "Ash"]))
-summary(lmAC)
-
-plot(Tday$maxVPD[Tday$Removal == "C" & Tday$species == "Ash"],lmAC$residuals)
-qqnorm(lmAC$residuals)
-qqline(lmAC$residuals)
-
-lmAR <- lm(Tday$L.m2.day[Tday$Removal == "R" & Tday$species == "Ash"] ~ log(Tday$maxVPD[Tday$Removal == "R" & Tday$species == "Ash"]))
-summary(lmAR)
-
-plot(Tday$maxVPD[Tday$Removal == "R" & Tday$species == "Ash"],lmAC$residuals)
-qqnorm(lmAR$residuals)
-qqline(lmAR$residuals)
-
-lmBC <- lm(Tday$L.m2.day[Tday$Removal == "C" & Tday$species == "Buckthorn"] ~ log(Tday$maxVPD[Tday$Removal == "C" & Tday$species == "Buckthorn"]))
-summary(lmBC)
 
 # removal completed by 181 doy
 
@@ -482,17 +466,68 @@ plot(test$estD, moistD, type="l")
 ##############################
 #### daily T & VPD      ----
 
-summary(lmAC)
-qqnorm(lmAC$residuals)
-summary(lmBC)
 
-plot(log(Tday$maxVPD[Tday$Removal == "C" & Tday$species == "Ash"]),lmAC$residuals)
+lmAC <- lm(Tday$L.m2.day[Tday$Removal == "C" & Tday$species == "Ash"] ~ log(Tday$maxVPD[Tday$Removal == "C" & Tday$species == "Ash"]))
+summary(lmAC)
+
+plot(Tday$maxVPD[Tday$Removal == "C" & Tday$species == "Ash"],lmAC$residuals)
+qqnorm(lmAC$residuals)
+qqline(lmAC$residuals)
 
 lmAR <- lm(Tday$L.m2.day[Tday$Removal == "R" & Tday$species == "Ash"] ~ log(Tday$maxVPD[Tday$Removal == "R" & Tday$species == "Ash"]))
 summary(lmAR)
+
+plot(Tday$maxVPD[Tday$Removal == "R" & Tday$species == "Ash"],lmAR$residuals)
 qqnorm(lmAR$residuals)
-plot(log(Tday$maxVPD[Tday$Removal == "R" & Tday$species == "Ash"]),lmAR$residuals)
-plot(Tday$L.m2.day[Tday$Removal == "R" & Tday$species == "Ash"])
+qqline(lmAR$residuals)
+
+lmBC <- lm(Tday$L.m2.day[Tday$Removal == "C" & Tday$species == "Buckthorn"] ~ log(Tday$maxVPD[Tday$Removal == "C" & Tday$species == "Buckthorn"]))
+summary(lmBC)
+qqnorm(lmBC$residuals)
+
+plot(log(Tday$maxVPD[Tday$Removal == "C" & Tday$species == "Buckthorn"]),lmBC$residuals)
+
+
+
+summary(lmAC)
+summary(lmAR)
+summary(lmBC)
+
+# look at daily soil moisture and T
+
+SMdaily <- TMSsub %>%
+  group_by(doy, location) %>%
+  summarise(SM=mean(SM.cor))
+SMdaily$Removal <- ifelse(SMdaily$location == "removal", "R",
+                          ifelse(SMdaily$location == "control","C","O"))
+SMdaily <- SMdaily %>%
+  filter(Removal != "O")
+
+lmSC <- lm(TdayS$L.m2.day[TdayS$Removal == "C"&TdayS$species == "Ash"] ~ TdayS$SM[TdayS$Removal == "C"&TdayS$species == "Ash"])
+summary(lmSC)
+qqnorm(lmSC$residuals)
+qqline(lmSC$residuals)
+plot(TdayS$SM[TdayS$Removal == "C"&TdayS$species == "Ash"],lmSC$residuals)
+
+lmSR <- lm(TdayS$L.m2.day[TdayS$Removal == "R"&TdayS$species == "Ash"] ~ TdayS$SM[TdayS$Removal == "R"&TdayS$species == "Ash"])
+summary(lmSR)
+qqnorm(lmSR$residuals)
+qqline(lmSR$residuals)
+plot(TdayS$SM[TdayS$Removal == "R"&TdayS$species == "Ash"],lmSR$residuals)
+
+
+
+lmSB <- lm(TdayS$L.m2.day[TdayS$Removal == "C"&TdayS$species == "Buckthorn"] ~ TdayS$SM[TdayS$Removal == "C"&TdayS$species == "Buckthorn"])
+summary(lmSB)
+qqnorm(lmSB$residuals)
+qqline(lmSB$residuals)
+plot(TdayS$SM[TdayS$Removal == "C"&TdayS$species == "Buckthorn"],lmSB$residuals)
+
+ggplot(TdayS, aes(SM, L.m2.day, color=expID))+
+         geom_point()
+
+
+
 
 png(paste0(outDir,"/Tday_VPD.png"), width = 15, height = 15, units = "in", res=300)
 
@@ -540,51 +575,8 @@ mtext("Log-scale vapor pressure deficit (log(KPa))", side=1, line=4, cex=llc)
 
 dev.off()
 
-summary(lmAC)
-summary(lmAR)
-summary(lmBC)
 
-# look at daily soil moisture and T
-
-SMdaily <- TMSsub %>%
-  group_by(doy, location) %>%
-  summarise(SM=mean(SM.cor))
-SMdaily$Removal <- ifelse(SMdaily$location == "removal", "R",
-                          ifelse(SMdaily$location == "control","C","O"))
-SMdaily <- SMdaily %>%
-  filter(Removal != "O")
-
-TdayS <- inner_join(Tday, SMdaily, by=c("doy","Removal"))
-ggplot(TdayS, aes(SM, L.m2.day, size=species, color=Removal))+
-  geom_point()
-
-plot(TdayS$SM[TdayS$Removal == "R"&TdayS$species == "Ash"],
-     TdayS$L.m2.day[TdayS$Removal == "R"&TdayS$species == "Ash"])
-
-plot(TdayS$SM[TdayS$Removal == "C"&TdayS$species == "Buckthorn"],
-     TdayS$L.m2.day[TdayS$Removal == "C"&TdayS$species == "Buckthorn"])
-
-plot(TdayS$SM[TdayS$Removal == "C"&TdayS$species == "Ash"],
-     TdayS$L.m2.day[TdayS$Removal == "C"&TdayS$species == "Ash"])
-lmSC <- lm(TdayS$L.m2.day[TdayS$Removal == "C"&TdayS$species == "Ash"] ~ TdayS$SM[TdayS$Removal == "C"&TdayS$species == "Ash"])
-summary(lmSC)
-qqnorm(lmSC$residuals)
-plot(TdayS$SM[TdayS$Removal == "C"&TdayS$species == "Ash"],lmSC$residuals)
-
-lmSR <- lm(TdayS$L.m2.day[TdayS$Removal == "R"&TdayS$species == "Ash"] ~ TdayS$SM[TdayS$Removal == "R"&TdayS$species == "Ash"])
-summary(lmSR)
-qqnorm(lmSR$residuals)
-qqline(lmSR$residuals)
-plot(TdayS$SM[TdayS$Removal == "R"&TdayS$species == "Ash"],lmSR$residuals)
-
-
-lmSB <- lm(TdayS$L.m2.day[TdayS$Removal == "C"&TdayS$species == "Buckthorn"] ~ TdayS$SM[TdayS$Removal == "C"&TdayS$species == "Buckthorn"])
-summary(lmSB)
-qqnorm(lmSB$residuals)
-qqline(lmSB$residuals)
-plot(TdayS$SM[TdayS$Removal == "C"&TdayS$species == "Buckthorn"],lmSB$residuals)
-
-# look at difference in T on paired days
+#### look at difference in T on paired days ----
 TdayR <- data.frame(doy=Tday$doy[Tday$Removal == "R"&Tday$species == "Ash"],
                     L.m2.dayR = Tday$L.m2.day[Tday$Removal == "R"&Tday$species == "Ash"])
 
