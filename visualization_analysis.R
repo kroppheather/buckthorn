@@ -456,6 +456,8 @@ dev.off()
 ##############################
 #### soil stats ----- 
 test <- inner_join(controlT, removalT, by="estD")
+test$doy <- yday(test$estD)
+test$DD <-  test$doy + ((hour(test$estD)+(minute(test$estD)/60))/24)
 
 tempD <- test$Tm6.x - test$Tm6.y
 t.test(tempD, mu=0)
@@ -468,6 +470,14 @@ plot(test$estD, tempD, type="l")
 range(tempD)
 test$moistD <- moistD
 plot(test$estD, moistD, type="l")
+
+
+PrecipQuart <- data.frame(estD = ymd_hms(meterTable$Date),
+                          precip = meterTable$Precip)
+
+soilDiffT <- left_join(test, PrecipQuart, by="estD")
+plot(soilDiffT$precip, soilDiffT$moistD)
+plot(soilDiffT$DD, soilDiffT$moistD, type="l")
 
 ##############################
 #### daily T & VPD      ----
