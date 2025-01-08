@@ -150,20 +150,25 @@ layout(matrix(c(1,2,3), ncol=1), width=lcm(rep(wd*2.54,1)),
 
 par(mai=c(0.3,0.3,0.3,0.3))
 
-plot(c(0,0), c(0,0), ylim=c(10,26),
+plot(c(0,0), c(0,0), ylim=c(7,32),
      xlim=c(190,270),
      axes=FALSE, xlab=" ",
      ylab= " ", xaxs = "i", yaxs="i")
-points(meteoDaily$doy,meteoDaily$airT,
+points(meteoDaily$doy,meteoDaily$maxT,
        pch=19, col="black",
        type="b", cex=pt.c, lwd=ln.w)
+points(meteoDaily$doy,meteoDaily$minT,
+       pch=19, col="gray50",
+       type="b", cex=pt.c, lwd=ln.w)
+legend(248,33, c("maximum", "minimum"),
+       pch=19, lwd=ln.w, col=c("black", "gray50"), bty="n", cex=3)
 
 axis(1, seq(190,270, by=10), rep(" ", length(seq(190,270, by=10))), cex.axis=ax.c, lwd.ticks=tlw)
-axis(2, seq(10,25, by=5), rep(" ", length(seq(10,25, by=5))), las=2, cex.axis=ax.c, lwd.ticks=tlw)
-mtext( seq(10,25, by=5), at= seq(10,25, by=5), side=2, line=3, cex=alc, las=2)
+axis(2, seq(10,30, by=5), rep(" ", length(seq(10,30, by=5))), las=2, cex.axis=ax.c, lwd.ticks=tlw)
+mtext( seq(10,30, by=5), at= seq(10,30, by=5), side=2, line=3, cex=alc, las=2)
 mtext("Air temperature", side=2, line=13, cex=llc)
 mtext(expression(paste("(", degree,"C )")), side=2, line=9, cex=llc)
-text(192, 25, "a", cex=plc)
+text(192, 31, "a", cex=plc)
 
 par(mai=c(0.3,0.3,0.3,0.3))
 
@@ -195,11 +200,11 @@ plot(c(0,0), c(0,0), ylim=c(0,2.2),
      ylab= " ", xaxs = "i", yaxs="i")
 
 points(meteoDaily$doy,meteoDaily$aveVPD,
-       pch=19, col="black",
+       pch=19, col="gray70",
        type="b", cex=pt.c, lwd=ln.w)
 
 points(meteoDaily$doy,meteoDaily$maxVPD,
-       pch=19, col="#737B7F",
+       pch=19, col="black",
        type="b", cex=pt.c, lwd=ln.w)
 
 
@@ -214,7 +219,7 @@ mtext("Vapor Pressure Deficit ", side=2, line=13, cex=llc)
 mtext("(KPa)", side=2, line=9, cex=llc)
 text(192, 1.9, "c", cex=plc)
 legend("topright", c("average", "maximum"),
-       pch=19, lwd=ln.w, col=c("black", "#737B7F"), bty="n", cex=3)
+       pch=19, lwd=ln.w, col=c("gray70", "black"), bty="n", cex=3)
 
 dev.off()
 
@@ -352,7 +357,8 @@ dev.off()
 
 ##############################
 #### soil moisture       ----
-
+# double check rapid decline in soil moisture isn't from sensor issue
+check <- TMSsub %>% filter(location == "control" & doy > 235 & doy <242)
 hd <- 5
 wd <- 12
 

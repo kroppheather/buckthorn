@@ -222,6 +222,8 @@ meteoDaily <- meterTable %>%
   filter(doy >= 191 & year == 2021 & doy <= 270) %>%
   group_by(doy)%>%
   summarise(airT = mean(AirTemp, na.rm=TRUE),
+            maxT = max(AirTemp, na.rm=TRUE),
+            minT = min(AirTemp, na.rm=TRUE),
             TotPrecip_cm = sum(Precip , na.rm=TRUE)/10,
             aveVPD = mean(VPD , na.rm=TRUE), 
             maxVPD = max(VPD, na.rm=TRUE))
