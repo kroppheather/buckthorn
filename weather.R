@@ -191,7 +191,7 @@ weather$location <- rep("weather",nrow(weather))
 removal$location <- rep("removal",nrow(removal))
 control$location <- rep("control",nrow(control))
 
-# loam calculation
+# silty loam calculation
 
 weather$SM.cor <- (-0.00000002*(weather$SM^2)) + (0.0003*weather$SM) -0.2062
 removal$SM.cor <- (-0.00000002*(removal$SM^2)) + (0.0003*removal$SM) -0.2062
